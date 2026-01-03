@@ -10,6 +10,7 @@
 	import Register from './pages/Register.svelte'
 	import Dashboard from './pages/Dashboard.svelte'
 	import { authClient } from './lib/auth-client'
+	import Map from './pages/Map.svelte'
 
 	const session = authClient.useSession()
 
@@ -29,6 +30,10 @@
 		{
 			path: 'dashboard',
 			component: Dashboard
+		},
+		{
+			path: 'map',
+			component: Map
 		}
 	]
 </script>

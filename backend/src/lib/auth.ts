@@ -18,7 +18,7 @@ export const auth = betterAuth({
 			prompt: "select_account",
 			clientId: ENV.GOOGLE_CLIENT_ID,
 			clientSecret: ENV.GOOGLE_CLIENT_SECRET,
-			hd: "pcampus.edu.np",
+			// hd: "pcampus.edu.np",
 			scope: ['email']
 		}
 	},
