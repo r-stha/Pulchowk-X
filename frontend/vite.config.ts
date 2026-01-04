@@ -3,23 +3,14 @@ import { svelte } from '@sveltejs/vite-plugin-svelte'
 import tailwindcss from '@tailwindcss/vite'
 
 export default defineConfig({
-	plugins: [svelte(), tailwindcss()],
-	envDir: '../',
-	server: {
-		proxy: {
-			'/api': {
-				target: 'http://localhost:3000',
-				changeOrigin: true
-			}
-		}
-	},
-	build: {
-		rollupOptions: {
-			output: {
-				manualChunks: {
-					'maplibre-vendor': ['maplibre-gl', 'svelte-maplibre-gl']
-				}
-			}
-		}
-	}
+  plugins: [svelte(), tailwindcss()],
+  envDir: '../',
+  server: {
+    proxy: {
+      '/api': {
+        target: 'http://localhost:3000',
+        changeOrigin: true,
+      },
+    },
+  },
 })

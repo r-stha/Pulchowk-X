@@ -2,11 +2,18 @@
 	import {
 		Router,
 		type RouteConfig,
-		route,
+		type RouterInstance,
 		query,
-		goto
+		goto,
+		route
 	} from '@mateothegreat/svelte5-router'
 	import { authClient } from './lib/auth-client'
+	import LoadingSpinner from './components/LoadingSpinner.svelte'
+	import Home from './pages/Home.svelte'
+	import Register from './pages/Register.svelte'
+	import Dashboard from './pages/Dashboard.svelte'
+
+	let instance: RouterInstance = $state()!
 
 	const session = authClient.useSession()
 
@@ -17,15 +24,15 @@
 
 	const routes: RouteConfig[] = [
 		{
-			component: async () => await import('./pages/Home.svelte')
+			component: Home
 		},
 		{
 			path: 'register',
-			component: async () => await import('./pages/Register.svelte')
+			component: Register
 		},
 		{
 			path: 'dashboard',
-			component: async () => await import('./pages/Dashboard.svelte')
+			component: Dashboard
 		},
 		{
 			path: 'map',
@@ -39,7 +46,7 @@
 >
 	<div class="max-w-7xl mx-auto px-6 py-4">
 		<div class="flex items-center justify-between">
-			<a href="/" use:route class="flex items-center gap-2 group">
+			<a href="/" class="flex items-center gap-2 group">
 				<div
 					class="w-8 h-8 bg-linear-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center transition-transform group-hover:scale-110"
 				>
@@ -52,22 +59,29 @@
 			</a>
 			<div class="flex items-center gap-6">
 				<a
-					href="/"
 					use:route
+					href="/"
 					class="text-gray-600 hover:text-gray-900 font-medium transition-colors"
 					>Home</a
 				>
-				{#if $session.data?.user}
+				{#if $session.isPending}
+					<div class="h-10 w-24 bg-gray-200 rounded-lg animate-pulse"></div>
+				{:else if $session.data?.user}
 					<a
-						href="/dashboard"
 						use:route
+						href="/dashboard"
 						class="text-gray-600 hover:text-gray-900 font-medium transition-colors"
 						>Dashboard</a
+					>
+					<a
+						use:route
+						href="/map"
+						class="text-gray-600 hover:text-gray-900 font-medium transition-colors"
+						>Map</a
 					>
 				{:else}
 					<a
 						href="/register"
-						use:route
 						class="bg-linear-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-2 rounded-lg font-semibold transition-all duration-200 shadow-md hover:shadow-lg"
 						>Sign In</a
 					>
@@ -128,7 +142,14 @@
 {/if}
 
 <main class="min-h-screen bg-linear-to-br from-gray-50 via-white to-gray-50">
-	<Router {routes} />
+	{#if instance?.navigating}
+		<div
+			class="fixed inset-0 z-40 bg-white/80 backdrop-blur-sm flex items-center justify-center"
+		>
+			<LoadingSpinner size="lg" text="Loading..." />
+		</div>
+	{/if}
+	<Router bind:instance {routes} />
 </main>
 
 <footer class="bg-white border-t border-gray-200 py-8">
