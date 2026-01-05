@@ -1084,8 +1084,34 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    85.3239169994099,
-                    27.681793970575853
+                    85.3239283186274,
+                    27.682188311416212
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "description": "Block B Pulchowk Boys Hostel"
+            },
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    85.32390377692212,
+                    27.68184284511355
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "description": "Block C Pulchowk Boys Hostel"
+            },
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    85.32390894588298,
+                    27.681485585500837
                 ]
             }
         },
@@ -1109,7 +1135,10 @@
             },
             "geometry": {
                 "type": "Point",
-                "coordinates": [85.32277525891658, 27.68190370401871]
+                "coordinates": [
+                    85.32277525891658,
+                    27.68190370401871
+                ]
             }
         },
         {
@@ -1172,8 +1201,8 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    85.32407249618478,
-                    27.6831347682036
+                    85.3240672595856,
+                    27.683199124783584
                 ]
             }
         },
@@ -1193,11 +1222,27 @@
         {
             "type": "Feature",
             "properties": {
+                "description": "Staff Quarter"
+            },
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    85.32411254835387,
+                    27.68249831633632
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "properties": {
                 "description": "Exam Control Office, IOE"
             },
             "geometry": {
                 "type": "Point",
-                "coordinates": [85.32103017170311, 27.681071855710286]
+                "coordinates": [
+                    85.32103017170311,
+                    27.681071855710286
+                ]
             }
         }
     ]
