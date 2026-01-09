@@ -159,6 +159,48 @@
 		image?: string | string[];
 	}>({ title: "", description: "" });
 	let imagesLoaded = $state<Record<number, boolean>>({});
+	let imageProgress = $state<Record<number, number | undefined>>({});
+	let xhrFailedUrls = new Set<string>();
+
+	function loadWithProgress(url: string, index: number) {
+		// If we already know this URL fails CORS/XHR, skip straight to fallback
+		// Also skip if it's already loaded to avoid re-triggering
+		if (!url || xhrFailedUrls.has(url)) {
+			imageProgress[index] = undefined;
+			return;
+		}
+
+		imageProgress[index] = 0;
+		imagesLoaded[index] = false;
+
+		const xhr = new XMLHttpRequest();
+		xhr.open("GET", url, true);
+		xhr.responseType = "blob";
+
+		xhr.onprogress = (event) => {
+			if (event.lengthComputable) {
+				const percent = Math.round((event.loaded / event.total) * 100);
+				imageProgress[index] = percent;
+			}
+		};
+
+		xhr.onload = () => {
+			if (xhr.status === 200) {
+				imageProgress[index] = 100;
+			} else {
+				xhrFailedUrls.add(url);
+				imageProgress[index] = undefined;
+			}
+		};
+
+		xhr.onerror = () => {
+			console.log("XHR load failed (CORS), falling back", url);
+			xhrFailedUrls.add(url);
+			imageProgress[index] = undefined;
+		};
+
+		xhr.send();
+	}
 
 	const prefetchedUrls = new Set<string>();
 
@@ -170,16 +212,27 @@
 	}
 
 	$effect(() => {
-		if (popupOpen && popupData.image && Array.isArray(popupData.image)) {
-			// Prefetch next image
-			const nextIndex = (currentImageIndex + 1) % popupData.image.length;
-			prefetchImage(popupData.image[nextIndex]);
+		if (popupOpen && popupData.image) {
+			const currentUrl = Array.isArray(popupData.image)
+				? popupData.image[currentImageIndex]
+				: popupData.image;
 
-			// Prefetch previous image (for smoother backward navigation)
-			const prevIndex =
-				(currentImageIndex - 1 + popupData.image.length) %
-				popupData.image.length;
-			prefetchImage(popupData.image[prevIndex]);
+			if (currentUrl) {
+				loadWithProgress(currentUrl, 0);
+			}
+
+			if (Array.isArray(popupData.image)) {
+				// Prefetch next image
+				const nextIndex =
+					(currentImageIndex + 1) % popupData.image.length;
+				prefetchImage(popupData.image[nextIndex]);
+
+				// Prefetch previous image (for smoother backward navigation)
+				const prevIndex =
+					(currentImageIndex - 1 + popupData.image.length) %
+					popupData.image.length;
+				prefetchImage(popupData.image[prevIndex]);
+			}
 		}
 	});
 
@@ -1585,9 +1638,29 @@
 									<div
 										class="absolute inset-0 flex items-center justify-center bg-gray-100"
 									>
-										<div
-											class="w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"
-										></div>
+										{#if imageProgress[0] !== undefined}
+											<div
+												class="flex flex-col items-center gap-2"
+											>
+												<div
+													class="text-xs text-gray-500 font-medium"
+												>
+													{imageProgress[0]}%
+												</div>
+												<div
+													class="w-16 h-1 bg-gray-200 rounded-full overflow-hidden"
+												>
+													<div
+														class="h-full bg-blue-500 transition-all duration-200"
+														style="width: {imageProgress[0]}%"
+													></div>
+												</div>
+											</div>
+										{:else}
+											<div
+												class="w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"
+											></div>
+										{/if}
 									</div>
 								{/if}
 								<img
