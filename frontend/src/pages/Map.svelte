@@ -158,6 +158,30 @@
 		description: string;
 		image?: string | string[];
 	}>({ title: "", description: "" });
+	let imagesLoaded = $state<Record<number, boolean>>({});
+
+	const prefetchedUrls = new Set<string>();
+
+	function prefetchImage(url: string) {
+		if (!url || prefetchedUrls.has(url)) return;
+		const img = new Image();
+		img.src = url;
+		prefetchedUrls.add(url);
+	}
+
+	$effect(() => {
+		if (popupOpen && popupData.image && Array.isArray(popupData.image)) {
+			// Prefetch next image
+			const nextIndex = (currentImageIndex + 1) % popupData.image.length;
+			prefetchImage(popupData.image[nextIndex]);
+
+			// Prefetch previous image (for smoother backward navigation)
+			const prevIndex =
+				(currentImageIndex - 1 + popupData.image.length) %
+				popupData.image.length;
+			prefetchImage(popupData.image[prevIndex]);
+		}
+	});
 
 	let currentImageIndex = $state(0);
 	let showOutsideMessage = $state(false);
@@ -1329,11 +1353,37 @@
 								image: image || undefined,
 							};
 							currentImageIndex = 0;
+							imagesLoaded = {};
 							popupOpen = true;
 						}
 					}}
-					onmouseenter={() =>
-						(map.getCanvas().style.cursor = "pointer")}
+					onmouseenter={(e: any) => {
+						map.getCanvas().style.cursor = "pointer";
+
+						// Prefetch image on hover
+						if (e.features && e.features[0]) {
+							const props = e.features[0].properties || {};
+							let image = props.image;
+
+							if (
+								typeof image === "string" &&
+								image.startsWith("[") &&
+								image.endsWith("]")
+							) {
+								try {
+									image = JSON.parse(image);
+								} catch (e) {
+									// ignore parse error
+								}
+							}
+
+							if (Array.isArray(image) && image.length > 0) {
+								prefetchImage(image[0]);
+							} else if (typeof image === "string" && image) {
+								prefetchImage(image);
+							}
+						}
+					}}
 					onmouseleave={() => (map.getCanvas().style.cursor = "")}
 				/>
 			{/if}
@@ -1425,10 +1475,28 @@
 						>
 							{#if Array.isArray(popupData.image)}
 								{#each popupData.image as img, i}
+									{#if !imagesLoaded[i]}
+										<div
+											class="absolute top-0 left-0 w-full h-full flex items-center justify-center bg-gray-100 transition-transform duration-300 ease-in-out"
+											style="transform: translateX({(i -
+												currentImageIndex) *
+												100}%)"
+										>
+											<div
+												class="w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"
+											></div>
+										</div>
+									{/if}
 									<img
 										src={img}
 										alt={popupData.title}
-										class="absolute top-0 left-0 w-full h-full object-cover transition-transform duration-300 ease-in-out"
+										loading="lazy"
+										onload={() => (imagesLoaded[i] = true)}
+										class="absolute top-0 left-0 w-full h-full object-cover transition-transform duration-300 ease-in-out {imagesLoaded[
+											i
+										]
+											? 'opacity-100'
+											: 'opacity-0'}"
 										style="transform: translateX({(i -
 											currentImageIndex) *
 											100}%)"
@@ -1513,10 +1581,23 @@
 									</div>
 								{/if}
 							{:else}
+								{#if !imagesLoaded[0]}
+									<div
+										class="absolute inset-0 flex items-center justify-center bg-gray-100"
+									>
+										<div
+											class="w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"
+										></div>
+									</div>
+								{/if}
 								<img
 									src={popupData.image}
 									alt={popupData.title}
-									class="w-full h-32 object-cover transition-transform duration-700 group-hover:scale-110"
+									loading="lazy"
+									onload={() => (imagesLoaded[0] = true)}
+									class="w-full h-32 object-cover transition-transform duration-700 group-hover:scale-110 {imagesLoaded[0]
+										? 'opacity-100'
+										: 'opacity-0'}"
 								/>
 							{/if}
 							<div
