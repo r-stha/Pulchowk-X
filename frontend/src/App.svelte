@@ -9,6 +9,7 @@
 	} from "@mateothegreat/svelte5-router";
 	import { authClient } from "./lib/auth-client";
 	import LoadingSpinner from "./components/LoadingSpinner.svelte";
+	import ErrorToast from "./components/ErrorToast.svelte";
 	import Home from "./pages/Home.svelte";
 	import Register from "./pages/Register.svelte";
 	import Dashboard from "./pages/Dashboard.svelte";
@@ -25,10 +26,7 @@
 
 	const error = query("error");
 	let showError = $state(error === "unauthorized_domain");
-	const message = query("message");
-
 	if (error) goto("/");
-	if (message === "login_required") goto("register");
 
 	const routes: RouteConfig[] = [
 		{
@@ -51,7 +49,6 @@
 			component: AllEvents,
 		},
 		{
-			
 			path: /^\/clubs\/\d+\/events\/create\/?$/,
 			component: CreateEvent,
 		},
@@ -139,60 +136,11 @@
 </nav>
 
 <!-- Error Toast -->
-{#if showError}
-	<div
-		class="fixed top-24 right-4 z-50 animate-in fade-in slide-in-from-right-8 duration-300 max-w-md w-full"
-	>
-		<div
-			class="bg-white border-l-4 border-red-500 rounded-r-lg shadow-xl p-4 flex items-start gap-3"
-		>
-			<div class="p-1 bg-red-50 rounded-full text-red-500 shrink-0">
-				<svg
-					class="w-5 h-5"
-					fill="none"
-					stroke="currentColor"
-					viewBox="0 0 24 24"
-				>
-					<path
-						stroke-linecap="round"
-						stroke-linejoin="round"
-						stroke-width="2"
-						d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-					></path>
-				</svg>
-			</div>
-			<div class="flex-1">
-				<h3 class="text-sm font-semibold text-gray-900">
-					Access Denied
-				</h3>
-				<p class="text-sm text-gray-600 mt-1">
-					Please use your <span class="font-medium text-gray-900"
-						>@pcampus.edu.np</span
-					> email address to sign in.
-				</p>
-			</div>
-			<button
-				aria-label="Close error message"
-				onclick={() => (showError = false)}
-				class="text-gray-400 hover:text-gray-600 transition-colors"
-			>
-				<svg
-					class="w-5 h-5"
-					fill="none"
-					stroke="currentColor"
-					viewBox="0 0 24 24"
-				>
-					<path
-						stroke-linecap="round"
-						stroke-linejoin="round"
-						stroke-width="2"
-						d="M6 18L18 6M6 6l12 12"
-					></path>
-				</svg>
-			</button>
-		</div>
-	</div>
-{/if}
+<ErrorToast bind:show={showError} title="Access Denied">
+	Please use your <span class="font-medium text-gray-900"
+		>@pcampus.edu.np</span
+	> email address to sign in.
+</ErrorToast>
 
 <main class="min-h-[calc(100vh-4rem)] bg-gray-50">
 	{#if instance?.navigating}

@@ -15,7 +15,7 @@
 		loadClubs();
 		$effect(() => {
 			if (!$session.isPending && !$session.data?.user) {
-				goto("/register?message=login_required");
+				goto("/register?error=login_required");
 			}
 		});
 	});
@@ -154,17 +154,17 @@
 									class="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700"
 								/>
 								<div
-									class="absolute inset-0 bg-gradient-to-t from-gray-900/80 via-gray-900/20 to-transparent opacity-80"
+									class="absolute inset-0 bg-linear-to-t from-gray-900/80 via-gray-900/20 to-transparent opacity-80"
 								></div>
 							{:else}
 								<div
-									class="w-full h-full bg-gradient-to-br {getGradient(
+									class="w-full h-full bg-linear-to-br {getGradient(
 										i,
 									)} flex items-center justify-center relative overflow-hidden"
 								>
 									<!-- Abstract pattern/overlay -->
 									<div
-										class="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-from)_0%,_transparent_70%)]"
+										class="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_center,var(--tw-gradient-from)_0%,transparent_70%)]"
 									></div>
 									<span
 										class="text-6xl font-black text-white/90 transform group-hover:scale-125 transition-transform duration-500 drop-shadow-2xl"
@@ -212,7 +212,7 @@
 									{club.name}
 								</h3>
 								<p
-									class="text-gray-500 text-sm leading-relaxed line-clamp-3 min-h-[60px]"
+									class="text-gray-500 text-sm leading-relaxed line-clamp-3 min-h-15"
 								>
 									{club.description ||
 										"The vibrant community of students at Pulchowk Campus, dedicated to excellence and innovation."}

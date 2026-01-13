@@ -136,9 +136,15 @@
 							<div
 								class="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center text-3xl font-bold text-blue-600 border-4 border-white shadow-sm"
 							>
-								{$session.data.user.name
-									?.charAt(0)
-									.toUpperCase() || "U"}
+								{#if $session.data.user.image}
+									<img
+										src={$session.data.user.image}
+										alt="User Avatar"
+										class="w-full h-full object-cover rounded-full"
+									/>
+								{:else}
+									{$session.data.user.name}
+								{/if}
 							</div>
 							<div>
 								<h2 class="text-xl font-bold text-gray-900">

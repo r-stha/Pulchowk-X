@@ -13,7 +13,7 @@
 	import type { FeatureCollection, Feature } from "geojson";
 	import pulchowk from "./pulchowk.json";
 	import { fade, fly, slide } from "svelte/transition";
-	import { cubicOut, quintOut, backOut } from "svelte/easing";
+	import { quintOut } from "svelte/easing";
 	import LoadingSpinner from "../components/LoadingSpinner.svelte";
 
 	const SATELLITE_STYLE: any = {

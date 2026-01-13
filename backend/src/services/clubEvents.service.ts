@@ -1,6 +1,6 @@
 import { createClubInput } from "../types/events.js";
 import { db } from "../lib/db.js";
-import { clubs, eventRegistrations, events } from "../models/event-schema.js";
+import { clubs, events } from "../models/event-schema.js";
 import { desc, eq, sql, and, or, asc } from "drizzle-orm";
 
 export async function createClub(authClubId: string, clubData: createClubInput) {

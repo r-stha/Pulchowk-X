@@ -1,19 +1,18 @@
-export interface registerStudentForEventInput{
+export interface registerStudentForEventInput {
     authStudentId: string,
     eventId: number
 }
 
-export interface CreateEventInput{
-    
-        title: string;
-        description?: string;
-        eventType: string;
-        venue?: string;
-        maxParticipants?: number;
-        registrationDeadline: Date;
-        eventStartTime: Date;
-        eventEndTime: Date;
-        bannerUrl?: string;
+export interface CreateEventInput {
+    title: string;
+    description?: string;
+    eventType: string;
+    venue?: string;
+    maxParticipants?: number;
+    registrationDeadline: Date;
+    eventStartTime: Date;
+    eventEndTime: Date;
+    bannerUrl?: string;
 
 }
 

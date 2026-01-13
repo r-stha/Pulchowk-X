@@ -1,8 +1,15 @@
 <script lang="ts">
+	import { goto, query } from "@mateothegreat/svelte5-router";
 	import Google from "../icons/google.svelte";
 	import { authClient } from "../lib/auth-client";
+	import ErrorToast from "../components/ErrorToast.svelte";
 	let signingIn = $state(false);
 	let error = $state<string | null>(null);
+
+	const toastError = query("error");
+	let showError = $state(toastError === "login_required");
+
+	if (toastError) goto("/register");
 
 	const handleGoogleSignIn = async () => {
 		signingIn = true;
@@ -17,6 +24,12 @@
 		}
 	};
 </script>
+
+<ErrorToast bind:show={showError} title="Login Required">
+	Please use your <span class="font-medium text-gray-900"
+		>@pcampus.edu.np</span
+	> email address to sign in.
+</ErrorToast>
 
 <main
 	class="min-h-[calc(100vh-4rem)] flex items-center justify-center relative p-4 sm:p-8 overflow-hidden"

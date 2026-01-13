@@ -1,11 +1,7 @@
-
 import { Request, Response } from "express";
 import { createClub, getClubEvents, getClubs, getUpcomingevents, getClubById, getAllEvents } from "../services/clubEvents.service.js";
 import { createEvent } from "../services/createEvent.service.js";
 import { cancelEventRegistration, getEventRegistrations, getStudentActiveRegistration, registerStudentForEvent } from "../services/registerEvent.js";
-
-
-
 
 export async function allEvents(req: Request, res: Response) {
     try {
