@@ -1,6 +1,12 @@
 <script lang="ts">
   import { route as routeAction, goto } from "@mateothegreat/svelte5-router";
-  import { getClub, type Club } from "../lib/api";
+  import {
+    getClub,
+    type Club,
+    getClubAdmins,
+    addClubAdmin,
+    removeClubAdmin,
+  } from "../lib/api";
   import LoadingSpinner from "../components/LoadingSpinner.svelte";
   import { fade, fly } from "svelte/transition";
   import { authClient } from "../lib/auth-client";
@@ -14,16 +20,44 @@
   let loading = $state(true);
   let error = $state<string | null>(null);
 
+  // Admin management state
+  let admins = $state<
+    { id: string; email: string; name: string; image: string }[]
+  >([]);
+  let newAdminEmail = $state("");
+  let adminLoading = $state(false);
+  let adminError = $state<string | null>(null);
+
   const isClubOwner = $derived(
     $session.data?.user && club && club.authClubId === $session.data.user.id
   );
+
+  const isTempAdmin = $derived(
+    $session.data?.user &&
+      admins.some((admin) => admin.id === $session.data?.user?.id)
+  );
+
+  const userId = $derived($session.data?.user?.id);
+
+  const canCreateEvent = $derived(isClubOwner || isTempAdmin);
 
   $effect(() => {
     if (clubId) {
       loadClub();
     }
+  });
+
+  $effect(() => {
     if (!$session.isPending && !$session.data?.user) {
       goto("/register?message=login_required");
+    }
+  });
+
+  $effect(() => {
+    // Load admins if user is logged in, so we can determine temporary admin status
+    // distinct userId check prevents refetching on window focus when session refreshes
+    if (userId && clubId) {
+      loadAdmins();
     }
   });
 
@@ -41,6 +75,69 @@
       error = err.message || "An error occurred";
     } finally {
       loading = false;
+    }
+  }
+
+  async function loadAdmins() {
+    if (!clubId) return;
+    try {
+      const result = await getClubAdmins(parseInt(clubId));
+      if (result.success && result.admins) {
+        admins = result.admins;
+      }
+    } catch (err) {
+      console.error("Failed to load admins:", err);
+    }
+  }
+
+  async function handleAddAdmin() {
+    if (!newAdminEmail || !club?.authClubId) return;
+
+    adminLoading = true;
+    adminError = null;
+
+    try {
+      const result = await addClubAdmin(
+        parseInt(clubId),
+        newAdminEmail,
+        club.authClubId
+      );
+      if (result.success) {
+        newAdminEmail = "";
+        await loadAdmins();
+      } else {
+        adminError = result.message || "Failed to add admin";
+      }
+    } catch (err: any) {
+      adminError = err.message || "An error occurred";
+    } finally {
+      adminLoading = false;
+    }
+  }
+
+  async function handleRemoveAdmin(userId: string) {
+    if (!club?.authClubId) return;
+
+    if (!confirm("Are you sure you want to remove this admin?")) return;
+
+    adminLoading = true;
+    adminError = null;
+
+    try {
+      const result = await removeClubAdmin(
+        parseInt(clubId),
+        userId,
+        club.authClubId
+      );
+      if (result.success) {
+        await loadAdmins();
+      } else {
+        adminError = result.message || "Failed to remove admin";
+      }
+    } catch (err: any) {
+      adminError = err.message || "An error occurred";
+    } finally {
+      adminLoading = false;
     }
   }
 </script>
@@ -180,7 +277,7 @@
                       />
                     </svg>
                   </a>
-                  {#if isClubOwner}
+                  {#if canCreateEvent}
                     <a
                       href="/clubs/{club.id}/events/create"
                       use:routeAction
@@ -229,6 +326,108 @@
               </p>
             </div>
           </div>
+
+          {#if isClubOwner}
+            <!-- Admin Management Section -->
+            <div
+              class="bg-white rounded-3xl shadow-sm border border-gray-100 p-8"
+              in:fly={{ y: 20, duration: 600, delay: 300 }}
+            >
+              <h2 class="text-2xl font-bold text-gray-900 mb-6">
+                Manage Admins
+              </h2>
+
+              <div
+                class="mb-8 p-4 bg-gray-50 rounded-xl border border-gray-100"
+              >
+                <h3
+                  class="text-sm font-bold text-gray-700 uppercase tracking-wide mb-4"
+                >
+                  Add New Admin
+                </h3>
+                <div class="flex flex-col sm:flex-row gap-3">
+                  <div class="flex-1">
+                    <input
+                      type="email"
+                      bind:value={newAdminEmail}
+                      placeholder="Enter user email address"
+                      class="w-full px-4 py-3 rounded-xl border-gray-200 focus:border-blue-500 focus:ring-blue-500 transition-shadow"
+                    />
+                  </div>
+                  <button
+                    onclick={handleAddAdmin}
+                    disabled={adminLoading || !newAdminEmail}
+                    class="px-6 py-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 focus:ring-4 focus:ring-blue-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {adminLoading ? "Adding..." : "Add Admin"}
+                  </button>
+                </div>
+                {#if adminError}
+                  <p class="mt-2 text-sm text-red-600">{adminError}</p>
+                {/if}
+              </div>
+
+              <div>
+                <h3
+                  class="text-sm font-bold text-gray-700 uppercase tracking-wide mb-4"
+                >
+                  Current Admins
+                </h3>
+                {#if admins.length === 0}
+                  <p class="text-gray-500 italic">
+                    No additional admins assigned.
+                  </p>
+                {:else}
+                  <ul class="divide-y divide-gray-100">
+                    {#each admins as admin}
+                      <li class="py-4 flex justify-between items-center group">
+                        <div class="flex items-center gap-3">
+                          {#if admin.image}
+                            <img
+                              src={admin.image}
+                              alt={admin.name}
+                              class="w-10 h-10 rounded-full"
+                            />
+                          {:else}
+                            <div
+                              class="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center text-gray-500 font-medium"
+                            >
+                              {admin.name.charAt(0)}
+                            </div>
+                          {/if}
+                          <div>
+                            <p class="font-medium text-gray-900">
+                              {admin.name}
+                            </p>
+                            <p class="text-sm text-gray-500">{admin.email}</p>
+                          </div>
+                        </div>
+                        <button
+                          onclick={() => handleRemoveAdmin(admin.id)}
+                          class="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
+                          title="Remove Admin"
+                        >
+                          <svg
+                            class="w-5 h-5"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                              stroke-width="2"
+                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                            />
+                          </svg>
+                        </button>
+                      </li>
+                    {/each}
+                  </ul>
+                {/if}
+              </div>
+            </div>
+          {/if}
         </div>
 
         <!-- Right Column: Stats & Secondary Info -->

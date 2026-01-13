@@ -1,10 +1,28 @@
 import { Request, Response } from "express";
-import { createClub, getClubEvents, getClubs, getUpcomingevents, getClubById, getAllEvents } from "../services/clubEvents.service.js";
+import { createClub, getClubEvents, getClubs, getUpcomingevents, getClubById, getAllEvents, addClubAdmin, removeClubAdmin, getClubAdmins } from "../services/clubEvents.service.js";
 import { createEvent } from "../services/createEvent.service.js";
 import { cancelEventRegistration, getEventRegistrations, getStudentActiveRegistration, registerStudentForEvent } from "../services/registerEvent.js";
 import { db } from "../lib/db.js";
 import { user } from "../models/auth-schema.js";
 import { eq } from "drizzle-orm";
+
+export async function getAdmins(req: Request, res: Response) {
+    const { clubId } = req.params;
+    const result = await getClubAdmins(parseInt(clubId));
+    return res.json(result);
+}
+
+export async function addAdmin(req: Request, res: Response) {
+    const { clubId, email, ownerId } = req.body;
+    const result = await addClubAdmin(ownerId, clubId, email);
+    return res.json(result);
+}
+
+export async function removeAdmin(req: Request, res: Response) {
+    const { clubId, userId, ownerId } = req.body;
+    const result = await removeClubAdmin(ownerId, clubId, userId);
+    return res.json(result);
+}
 
 export async function allEvents(req: Request, res: Response) {
     try {
@@ -88,13 +106,13 @@ export async function clubEvents(req: Request, res: Response) {
 
 export async function CreateEvent(req: Request, res: Response) {
     try {
-        const { authId, ...eventData } = req.body;
+        const { authId, clubId, ...eventData } = req.body;
 
         console.log(eventData);
-        if (!authId || !eventData) {
-            throw Error("Id and Data are needed");
+        if (!authId || !clubId || !eventData) {
+            throw Error("Id, ClubId and Data are needed");
         }
-        const result = await createEvent(authId, eventData);
+        const result = await createEvent(authId, parseInt(clubId), eventData);
 
         return res.json({ data: result });
     } catch (error) {

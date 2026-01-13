@@ -1,7 +1,75 @@
 import { createClubInput } from "../types/events.js";
 import { db } from "../lib/db.js";
-import { clubs, events } from "../models/event-schema.js";
-import { desc, eq, sql, and, or, asc } from "drizzle-orm";
+import { clubs, events, clubAdmins } from "../models/event-schema.js"; // updated import
+import { desc, eq, sql, and, or, asc } from "drizzle-orm"; // updated imports
+import { user } from "../models/auth-schema.js";
+
+export async function addClubAdmin(ownerId: string, clubId: number, newAdminEmail: string) {
+    try {
+        const club = await db.query.clubs.findFirst({
+            where: eq(clubs.id, clubId)
+        });
+
+        if (!club) throw new Error("Club not found");
+        if (club.authClubId !== ownerId) throw new Error("Only the owner can add admins");
+
+        const targetUser = await db.query.user.findFirst({
+            where: eq(user.email, newAdminEmail)
+        });
+
+        if (!targetUser) throw new Error("User with this email not found");
+
+        await db.insert(clubAdmins).values({
+            clubId,
+            userId: targetUser.id,
+            role: 'admin'
+        });
+
+        return { success: true, message: "Admin added successfully" };
+    } catch (e: any) {
+        return { success: false, message: e.message };
+    }
+}
+
+export async function removeClubAdmin(ownerId: string, clubId: number, adminUserId: string) {
+    try {
+        const club = await db.query.clubs.findFirst({
+            where: eq(clubs.id, clubId)
+        });
+
+        if (!club) throw new Error("Club not found");
+        if (club.authClubId !== ownerId) throw new Error("Only the owner can remove admins");
+
+        await db.delete(clubAdmins).where(
+            and(
+                eq(clubAdmins.clubId, clubId),
+                eq(clubAdmins.userId, adminUserId)
+            )
+        );
+
+        return { success: true, message: "Admin removed successfully" };
+    } catch (e: any) {
+        return { success: false, message: e.message };
+    }
+}
+
+export async function getClubAdmins(clubId: number) {
+    try {
+        const admins = await db.select({
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            image: user.image
+        })
+            .from(clubAdmins)
+            .innerJoin(user, eq(clubAdmins.userId, user.id))
+            .where(eq(clubAdmins.clubId, clubId));
+
+        return { success: true, admins };
+    } catch (e: any) {
+        return { success: false, message: e.message };
+    }
+}
 
 export async function createClub(authClubId: string, clubData: createClubInput) {
     try {
@@ -18,14 +86,11 @@ export async function createClub(authClubId: string, clubData: createClubInput) 
         }
 
         const existingClub = await db.query.clubs.findFirst({
-            where: or(
-                eq(clubs.authClubId, authClubId),
-                eq(clubs.email, clubData.email)
-            ),
+            where: eq(clubs.name, clubData.name),
         });
 
         if (existingClub) {
-            throw new Error("Club already registered in getSystem")
+            throw new Error("Club with this name already exists")
         }
 
         const [newclub] = await db.insert(clubs).values({

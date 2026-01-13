@@ -4,6 +4,7 @@
   import {
     getClubEvents,
     getClub,
+    getClubAdmins,
     type ClubEvent,
     type Club,
   } from "../lib/api";
@@ -16,6 +17,7 @@
   const clubId = $derived(route.result.path.params.clubId);
 
   const session = authClient.useSession();
+  const userId = $derived($session.data?.user?.id);
 
   const clubQuery = createQuery(() => ({
     queryKey: ["club", clubId],
@@ -38,11 +40,28 @@
     enabled: !!clubId && !isNaN(parseInt(clubId)),
   }));
 
+  const adminsQuery = createQuery(() => ({
+    queryKey: ["clubAdmins", clubId],
+    queryFn: async () => {
+      const res = await getClubAdmins(parseInt(clubId));
+      if (res.success && res.admins) return res.admins;
+      return [];
+    },
+    enabled: !!clubId && !isNaN(parseInt(clubId)) && !!userId,
+  }));
+
   const isClubOwner = $derived(
-    $session.data?.user &&
-      clubQuery.data &&
-      clubQuery.data.authClubId === $session.data.user.id
+    userId && clubQuery.data && clubQuery.data.authClubId === userId
   );
+
+  const isTempAdmin = $derived(
+    userId &&
+      adminsQuery.data &&
+      adminsQuery.data.some((admin: any) => admin.id === userId)
+  );
+
+  const canCreateEvent = $derived(isClubOwner || isTempAdmin);
+
   const loading = $derived(clubQuery.isLoading || eventsQuery.isLoading);
   const error = $derived(
     clubQuery.error?.message || eventsQuery.error?.message
@@ -264,7 +283,7 @@
             </p>
           </div>
 
-          {#if isClubOwner}
+          {#if canCreateEvent}
             <div class="shrink-0 w-full md:w-auto mt-4 md:mt-0">
               <a
                 href="/clubs/{clubId}/events/create"

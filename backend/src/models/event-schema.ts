@@ -32,7 +32,7 @@ export const clubs = pgTable(
   "clubs",
   {
     id: serial("id").primaryKey(),
-    authClubId: varchar("auth_club_id", { length: 255 }).notNull().unique(),
+    authClubId: varchar("auth_club_id", { length: 255 }).notNull(),
     name: varchar("name", { length: 255 }).notNull(),
     description: text("description"),
     email: varchar("email", { length: 255 }).notNull(),
@@ -42,9 +42,27 @@ export const clubs = pgTable(
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
   },
   (table) => [
-    uniqueIndex("clubs_email_idx").on(table.email),
+    index("clubs_email_idx").on(table.email),
     index("clubs_name_idx").on(table.name),
-    uniqueIndex("clubs_auth_club_id_idx").on(table.authClubId),
+    index("clubs_auth_club_id_idx").on(table.authClubId),
+  ]
+);
+
+export const clubAdmins = pgTable(
+  "club_admins",
+  {
+    id: serial("id").primaryKey(),
+    clubId: integer("club_id")
+      .references(() => clubs.id, { onDelete: "cascade" })
+      .notNull(),
+    userId: varchar("user_id", { length: 255 })
+      .references(() => user.id, { onDelete: "cascade" })
+      .notNull(),
+    role: varchar("role", { length: 50 }).default("admin").notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => [
+    uniqueIndex("club_admins_unique_idx").on(table.clubId, table.userId),
   ]
 );
 

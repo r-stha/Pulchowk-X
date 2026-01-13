@@ -1,7 +1,7 @@
 <script lang="ts">
   import { route as routeAction, goto } from "@mateothegreat/svelte5-router";
   import { authClient } from "../lib/auth-client";
-  import { createEvent, getClub, type Club } from "../lib/api";
+  import { createEvent, getClub, type Club, getClubAdmins } from "../lib/api";
   import LoadingSpinner from "../components/LoadingSpinner.svelte";
   import { fade, fly, slide } from "svelte/transition";
 
@@ -9,6 +9,7 @@
   const clubId = $derived(route.result.path.params.clubId);
 
   const session = authClient.useSession();
+  const userId = $derived($session.data?.user?.id);
 
   let club = $state<Club | null>(null);
   let loading = $state(true);
@@ -41,20 +42,24 @@
 
   $effect(() => {
     if (clubId) {
-      checkAuthorization();
+      loadClub();
     }
   });
 
-  async function checkAuthorization() {
+  $effect(() => {
+    if (club && userId) {
+      checkPermissions();
+    }
+  });
+
+  async function loadClub() {
     loading = true;
     try {
       const result = await getClub(parseInt(clubId));
       if (result.success && result.clubData) {
         club = result.clubData;
-
-        if ($session.data?.user && club) {
-          isAuthorized = club.authClubId === $session.data.user.id;
-        }
+        // Initial permission check if user already loaded
+        if (userId) checkPermissions();
       } else {
         error = "Club not found";
       }
@@ -62,6 +67,27 @@
       error = err.message || "An error occurred";
     } finally {
       loading = false;
+    }
+  }
+
+  async function checkPermissions() {
+    if (!club || !userId) return;
+
+    // Check if owner
+    if (club.authClubId === userId) {
+      isAuthorized = true;
+    } else {
+      // Check if admin
+      try {
+        const adminRes = await getClubAdmins(parseInt(clubId));
+        if (adminRes.success && adminRes.admins) {
+          isAuthorized = adminRes.admins.some(
+            (admin: any) => admin.id === userId
+          );
+        }
+      } catch (e) {
+        console.error("Failed to check admin status", e);
+      }
     }
   }
 
@@ -98,17 +124,21 @@
     error = null;
 
     try {
-      const result = await createEvent($session.data.user.id, {
-        title,
-        description,
-        eventType,
-        venue,
-        maxParticipants: maxParticipants || 0,
-        registrationDeadline: registrationDeadline,
-        eventStartTime: eventStartTime,
-        eventEndTime: eventEndTime,
-        bannerUrl: bannerUrl || undefined,
-      });
+      const result = await createEvent(
+        $session.data.user.id,
+        parseInt(clubId),
+        {
+          title,
+          description,
+          eventType,
+          venue,
+          maxParticipants: maxParticipants || 0,
+          registrationDeadline: registrationDeadline,
+          eventStartTime: eventStartTime,
+          eventEndTime: eventEndTime,
+          bannerUrl: bannerUrl || undefined,
+        }
+      );
 
       if (result.success) {
         success = true;

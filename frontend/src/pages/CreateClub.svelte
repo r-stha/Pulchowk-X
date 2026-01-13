@@ -128,57 +128,6 @@
           </p>
         </div>
 
-        {#if success}
-          <div
-            class="bg-green-50 text-green-700 p-6 rounded-2xl mb-8 flex items-center gap-4 border border-green-100"
-            transition:slide
-          >
-            <div
-              class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center shrink-0"
-            >
-              <svg
-                class="w-6 h-6"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M5 13l4 4L19 7"
-                ></path>
-              </svg>
-            </div>
-            <div>
-              <p class="font-bold text-lg">Club Created Successfully!</p>
-              <p class="text-green-600">Redirecting to club page...</p>
-            </div>
-          </div>
-        {/if}
-
-        {#if error}
-          <div
-            class="bg-red-50 text-red-700 p-4 rounded-xl mb-8 flex items-start gap-3 border border-red-100"
-            transition:slide
-          >
-            <svg
-              class="w-5 h-5 mt-0.5 shrink-0"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-              ></path>
-            </svg>
-            <p>{error}</p>
-          </div>
-        {/if}
-
         <form onsubmit={handleSubmit} class="space-y-8">
           <!-- Basic Info Section -->
           <div class="space-y-6">
@@ -264,6 +213,55 @@
               </div>
             </div>
           </div>
+          {#if success}
+            <div
+              class="bg-green-50 text-green-700 p-6 rounded-2xl mb-8 flex items-center gap-4 border border-green-100"
+              transition:slide
+            >
+              <div
+                class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center shrink-0"
+              >
+                <svg
+                  class="w-6 h-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M5 13l4 4L19 7"
+                  ></path>
+                </svg>
+              </div>
+              <div>
+                <p class="font-bold text-lg">Club Created Successfully!</p>
+                <p class="text-green-600">Redirecting to club page...</p>
+              </div>
+            </div>
+          {/if}
+          {#if error}
+            <div
+              class="bg-red-50 text-red-700 p-4 rounded-xl mb-8 flex items-start gap-3 border border-red-100"
+              transition:slide
+            >
+              <svg
+                class="w-5 h-5 mt-0.5 shrink-0"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                ></path>
+              </svg>
+              <p>{error}</p>
+            </div>
+          {/if}
 
           <div
             class="pt-4 border-t border-gray-100 flex items-center justify-end gap-4"

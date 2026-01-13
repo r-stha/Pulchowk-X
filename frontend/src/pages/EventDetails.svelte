@@ -19,6 +19,7 @@
   const eventId = $derived(route.result.path.params.eventId);
 
   const session = authClient.useSession();
+  const userId = $derived($session.data?.user?.id);
 
   let club = $state<Club | null>(null);
   let event = $state<ClubEvent | null>(null);
@@ -39,6 +40,35 @@
     }
   });
 
+  $effect(() => {
+    if (club && userId) {
+      isClubOwner = club.authClubId === userId;
+    }
+  });
+
+  $effect(() => {
+    if (userId && !isClubOwner && event) {
+      checkRegistrationStatus();
+    }
+  });
+
+  $effect(() => {
+    if (userId && isClubOwner && event) {
+      loadRegisteredStudents();
+    }
+  });
+
+  async function loadRegisteredStudents() {
+    try {
+      const studentsResult = await getRegisteredStudents(parseInt(eventId));
+      if (Array.isArray(studentsResult)) {
+        registeredStudents = studentsResult;
+      }
+    } catch (e) {
+      console.error("Failed to load registered students", e);
+    }
+  }
+
   async function loadEventDetails() {
     loading = true;
     error = null;
@@ -46,10 +76,6 @@
       const clubResult = await getClub(parseInt(clubId));
       if (clubResult.success && clubResult.clubData) {
         club = clubResult.clubData;
-
-        if ($session.data?.user && club) {
-          isClubOwner = club.authClubId === $session.data.user.id;
-        }
       } else {
         console.error("Club not found");
       }
@@ -65,17 +91,6 @@
         error = "Event not found";
         return;
       }
-
-      if (isClubOwner) {
-        const studentsResult = await getRegisteredStudents(parseInt(eventId));
-        if (Array.isArray(studentsResult)) {
-          registeredStudents = studentsResult;
-        }
-      }
-
-      if ($session.data?.user && !isClubOwner) {
-        await checkRegistrationStatus();
-      }
     } catch (err: any) {
       error = err.message || "An error occurred";
     } finally {
@@ -84,10 +99,10 @@
   }
 
   async function checkRegistrationStatus() {
-    if (!$session.data?.user) return;
+    if (!userId) return;
 
     try {
-      const result = await getEnrollments($session.data.user.id);
+      const result = await getEnrollments(userId);
       if (result.success && result.registration) {
         isRegistered = result.registration.eventId === parseInt(eventId);
       }
@@ -97,7 +112,7 @@
   }
 
   async function handleRegister() {
-    if (!$session.data?.user) {
+    if (!userId) {
       goto("/register");
       return;
     }
@@ -106,10 +121,7 @@
     actionMessage = null;
 
     try {
-      const result = await registerForEvent(
-        $session.data.user.id,
-        parseInt(eventId)
-      );
+      const result = await registerForEvent(userId, parseInt(eventId));
       if (result.success) {
         isRegistered = true;
         actionMessage = {

@@ -1,17 +1,17 @@
 import { CreateEventInput } from "../types/events.js";
 import { db } from "../lib/db.js";
 import { eq, and } from "drizzle-orm";
-import { clubs, events } from "../models/event-schema.js";
+import { clubs, events, clubAdmins } from "../models/event-schema.js";
 
 
 
-export async function createEvent(authClubId: string, eventInput: CreateEventInput) {
-  
+export async function createEvent(userId: string, clubId: number, eventInput: CreateEventInput) {
+
     console.log('eventInput:', JSON.stringify(eventInput, null, 2));
-    
+
     try {
         const club = await db.query.clubs.findFirst({
-            where: eq(clubs.authClubId, authClubId),
+            where: eq(clubs.id, clubId),
         });
 
         if (!club) {
@@ -22,7 +22,25 @@ export async function createEvent(authClubId: string, eventInput: CreateEventInp
             throw new Error('Club is not active');
         }
 
-       
+        // Check authorization
+        let isAuthorized = club.authClubId === userId;
+
+        if (!isAuthorized) {
+            const admin = await db.query.clubAdmins.findFirst({
+                where: and(
+                    eq(clubAdmins.clubId, clubId),
+                    eq(clubAdmins.userId, userId)
+                )
+            });
+            if (admin) isAuthorized = true;
+        }
+
+        if (!isAuthorized) {
+            throw new Error('Unauthorized to create events for this club');
+        }
+
+
+
         console.log('Converting dates...');
         let eventStartTime: Date;
         let eventEndTime: Date;
@@ -46,12 +64,12 @@ export async function createEvent(authClubId: string, eventInput: CreateEventInp
             registrationDeadlineValid: !isNaN(registrationDeadline.getTime()),
         });
 
-       
+
         if (isNaN(eventStartTime.getTime()) || isNaN(eventEndTime.getTime()) || isNaN(registrationDeadline.getTime())) {
             throw new Error('Invalid date format received from client');
         }
 
-        
+
         if (eventStartTime >= eventEndTime) {
             throw new Error('Event end time must be after start time');
         }
@@ -60,7 +78,7 @@ export async function createEvent(authClubId: string, eventInput: CreateEventInp
             throw new Error('Registration deadline must be before event start time');
         }
 
-       
+
         const insertData = {
             clubId: club.id,
             title: eventInput.title,
@@ -92,13 +110,13 @@ export async function createEvent(authClubId: string, eventInput: CreateEventInp
             event,
             message: 'Event created successfully',
         };
-        
+
     } catch (error: any) {
         console.error('=== BACKEND ERROR ===');
         console.error('Error message:', error.message);
         console.error('Error stack:', error.stack);
         console.error('Full error:', error);
-        
+
         return {
             success: false,
             message: error.message || 'Failed to create event'

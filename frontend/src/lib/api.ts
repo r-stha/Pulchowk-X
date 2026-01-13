@@ -118,7 +118,7 @@ export async function getAllEvents(): Promise<{ success: boolean; allEvents?: Cl
 }
 
 
-export async function createEvent(authId: string, eventData: {
+export async function createEvent(authId: string, clubId: number, eventData: {
     title: string;
     description: string;
     eventType: string;
@@ -132,7 +132,7 @@ export async function createEvent(authId: string, eventData: {
 
 
     try {
-        const payload = { authId, ...eventData };
+        const payload = { authId, clubId, ...eventData };
         console.log('Payload before stringify:', payload);
 
         const bodyString = JSON.stringify(payload);
@@ -153,6 +153,46 @@ export async function createEvent(authId: string, eventData: {
     } catch (error: any) {
         console.error('Error:', error.message);
         throw error;
+    }
+}
+
+
+export async function getClubAdmins(clubId: number): Promise<{ success: boolean; admins?: any[]; message?: string }> {
+    try {
+        const res = await fetch(`${API_BASE}/club/admins/${clubId}`, {
+            credentials: 'include'
+        });
+        return await res.json();
+    } catch (error: any) {
+        return { success: false, message: error.message };
+    }
+}
+
+export async function addClubAdmin(clubId: number, email: string, ownerId: string): Promise<{ success: boolean; message?: string }> {
+    try {
+        const res = await fetch(`${API_BASE}/club/add-admin`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ clubId, email, ownerId })
+        });
+        return await res.json();
+    } catch (error: any) {
+        return { success: false, message: error.message };
+    }
+}
+
+export async function removeClubAdmin(clubId: number, userId: string, ownerId: string): Promise<{ success: boolean; message?: string }> {
+    try {
+        const res = await fetch(`${API_BASE}/club/remove-admin`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ clubId, userId, ownerId })
+        });
+        return await res.json();
+    } catch (error: any) {
+        return { success: false, message: error.message };
     }
 }
 
