@@ -22,6 +22,15 @@
   import EventDetails from "./pages/EventDetails.svelte";
   import CreateEvent from "./pages/CreateEvent.svelte";
   import CreateClub from "./pages/CreateClub.svelte";
+  import { onMount } from "svelte";
+
+  onMount(() => {
+    if (document.readyState === "complete") import("./pages/Map.svelte");
+    else
+      window.addEventListener("load", () => import("./pages/Map.svelte"), {
+        once: true,
+      });
+  });
 
   let instance: RouterInstance = $state()!;
 
@@ -114,15 +123,19 @@
             class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-all"
             >Events</a
           >
+          <a
+            use:route
+            href="/map"
+            class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-all"
+            >Map</a
+          >
           {#if $session.isPending}
-            <div class="h-9 w-24 bg-gray-100 rounded-lg animate-pulse"></div>
+            <div class="px-4 py-2 flex items-center justify-center min-w-[90px]">
+              <div
+                class="w-4 h-4 border-2 border-gray-200 border-t-gray-600 rounded-full animate-spin"
+              ></div>
+            </div>
           {:else if $session.data?.user}
-            <a
-              use:route
-              href="/map"
-              class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-all"
-              >Map</a
-            >
             <a
               use:route
               href="/dashboard"

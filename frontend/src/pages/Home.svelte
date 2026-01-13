@@ -35,16 +35,23 @@
         <div
           class="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4"
         >
+          <a
+            use:route
+            href="/map"
+            class="w-full sm:w-auto px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold shadow-lg shadow-blue-600/20 transition-all hover:-translate-y-1"
+          >
+            Launch Map
+          </a>
+
           {#if $session.isPending}
-            <div class="h-12 w-32 bg-gray-200 rounded-xl animate-pulse"></div>
-          {:else if $session.data?.user}
-            <a
-              use:route
-              href="/map"
-              class="w-full sm:w-auto px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold shadow-lg shadow-blue-600/20 transition-all hover:-translate-y-1"
+            <div
+              class="w-full sm:w-auto px-8 py-4 bg-white border border-gray-200 rounded-xl font-semibold flex items-center justify-center min-w-40"
             >
-              Launch Map
-            </a>
+              <div
+                class="w-5 h-5 border-2 border-gray-200 border-t-gray-900 rounded-full animate-spin"
+              ></div>
+            </div>
+          {:else if $session.data?.user}
             <a
               use:route
               href="/dashboard"
@@ -55,15 +62,9 @@
           {:else}
             <a
               href="/register"
-              class="w-full sm:w-auto px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold shadow-lg shadow-blue-600/20 transition-all hover:-translate-y-1"
-            >
-              Get Started
-            </a>
-            <a
-              href="#features"
               class="w-full sm:w-auto px-8 py-4 bg-white hover:bg-gray-50 text-gray-900 border border-gray-200 rounded-xl font-semibold transition-all hover:-translate-y-1"
             >
-              Learn More
+              Get Started
             </a>
           {/if}
         </div>
