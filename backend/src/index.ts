@@ -14,10 +14,10 @@ const __dirname = import.meta.dirname
 
 app.all('/api/auth/{*any}', toNodeHandler(auth))
 app.use(express.json())
-app.use("/api/event", eventRoutes)
-app.use("/api/event", clubProfileRoutes)
-app.use("/api", chatBotRoutes);
-app.use("/api", userRoutes);
+app.use("/api/events", eventRoutes)
+app.use("/api/clubs", clubProfileRoutes)
+app.use("/api/chatbot", chatBotRoutes);
+app.use("/api/users", userRoutes);
 
 app.use(express.static(path.join(__dirname, '../../frontend/dist')))
 

@@ -1,4 +1,5 @@
-const API_BASE = '/api/event';
+const API_EVENTS = '/api/events';
+const API_CLUBS = '/api/clubs';
 
 export interface Club {
     id: number;
@@ -91,7 +92,7 @@ export interface EventCategory {
 }
 
 export async function getClubs(): Promise<{ success: boolean; existingClub?: Club[]; message?: string }> {
-    const res = await fetch(`${API_BASE}/clubs`, {
+    const res = await fetch(`${API_EVENTS}/clubs`, {
         credentials: 'include',
     });
     const clone = res.clone();
@@ -106,7 +107,7 @@ export async function getClubs(): Promise<{ success: boolean; existingClub?: Clu
 
 
 export async function getClub(clubId: number): Promise<{ success: boolean; clubData?: Club; message?: string }> {
-    const res = await fetch(`${API_BASE}/clubs/${clubId}`, {
+    const res = await fetch(`${API_EVENTS}/clubs/${clubId}`, {
         credentials: 'include',
     });
     const clone = res.clone();
@@ -121,7 +122,7 @@ export async function getClub(clubId: number): Promise<{ success: boolean; clubD
 
 
 export async function getClubEvents(clubId: number): Promise<{ success: boolean; clubEvents?: ClubEvent[]; message?: string }> {
-    const res = await fetch(`${API_BASE}/events/${clubId}`, {
+    const res = await fetch(`${API_EVENTS}/events/${clubId}`, {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -139,7 +140,7 @@ export async function getClubEvents(clubId: number): Promise<{ success: boolean;
 
 export async function getUpcomingEvents(): Promise<{ success: boolean; upcomingEvents?: ClubEvent[]; message?: string }> {
     try {
-        const res = await fetch(`${API_BASE}/get-upcoming-events`, {
+        const res = await fetch(`${API_EVENTS}/get-upcoming-events`, {
             credentials: 'include',
         });
         const json = await res.json();
@@ -153,7 +154,7 @@ export async function getUpcomingEvents(): Promise<{ success: boolean; upcomingE
 
 export async function getAllEvents(): Promise<{ success: boolean; allEvents?: ClubEvent[]; message?: string }> {
     try {
-        const res = await fetch(`${API_BASE}/all-events`, {
+        const res = await fetch(`${API_EVENTS}/all-events`, {
             credentials: 'include',
         });
         const json = await res.json();
@@ -183,7 +184,7 @@ export async function createEvent(authId: string, clubId: number, eventData: {
 
         const bodyString = JSON.stringify(payload);
 
-        const res = await fetch(`${API_BASE}/create-event`, {
+        const res = await fetch(`${API_EVENTS}/create-event`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include',
@@ -204,7 +205,7 @@ export async function createEvent(authId: string, clubId: number, eventData: {
 
 export async function getClubAdmins(clubId: number): Promise<{ success: boolean; admins?: any[]; message?: string }> {
     try {
-        const res = await fetch(`${API_BASE}/club/admins/${clubId}`, {
+        const res = await fetch(`${API_EVENTS}/club/admins/${clubId}`, {
             credentials: 'include'
         });
         return await res.json();
@@ -215,7 +216,7 @@ export async function getClubAdmins(clubId: number): Promise<{ success: boolean;
 
 export async function addClubAdmin(clubId: number, email: string, ownerId: string): Promise<{ success: boolean; message?: string }> {
     try {
-        const res = await fetch(`${API_BASE}/club/add-admin`, {
+        const res = await fetch(`${API_EVENTS}/club/add-admin`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include',
@@ -229,7 +230,7 @@ export async function addClubAdmin(clubId: number, email: string, ownerId: strin
 
 export async function removeClubAdmin(clubId: number, userId: string, ownerId: string): Promise<{ success: boolean; message?: string }> {
     try {
-        const res = await fetch(`${API_BASE}/club/remove-admin`, {
+        const res = await fetch(`${API_EVENTS}/club/remove-admin`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include',
@@ -249,7 +250,7 @@ export async function createClub(clubData: {
     logoUrl?: string;
 }): Promise<{ success: boolean; club?: Club; message?: string }> {
     try {
-        const res = await fetch(`${API_BASE}/create-club`, {
+        const res = await fetch(`${API_EVENTS}/create-club`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include',
@@ -265,7 +266,7 @@ export async function createClub(clubData: {
 
 export async function registerForEvent(authStudentId: string, eventId: number): Promise<{ success: boolean; message?: string }> {
     try {
-        const res = await fetch(`${API_BASE}/register-event`, {
+        const res = await fetch(`${API_EVENTS}/register-event`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include',
@@ -282,7 +283,7 @@ export async function registerForEvent(authStudentId: string, eventId: number): 
 
 export async function cancelRegistration(authStudentId: string, eventId: number): Promise<{ success: boolean; message?: string }> {
     try {
-        const res = await fetch(`${API_BASE}/cancel-registration`, {
+        const res = await fetch(`${API_EVENTS}/cancel-registration`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include',
@@ -298,7 +299,7 @@ export async function cancelRegistration(authStudentId: string, eventId: number)
 
 
 export async function getEnrollments(authStudentId: string): Promise<{ success: boolean; registrations?: any[]; message?: string }> {
-    const res = await fetch(`${API_BASE}/enrollment`, {
+    const res = await fetch(`${API_EVENTS}/enrollment`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -317,7 +318,7 @@ export async function getEnrollments(authStudentId: string): Promise<{ success: 
 
 export async function getRegisteredStudents(eventId: number): Promise<any> {
     try {
-        const res = await fetch(`${API_BASE}/registered-student`, {
+        const res = await fetch(`${API_EVENTS}/registered-student`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include',
@@ -332,7 +333,7 @@ export async function getRegisteredStudents(eventId: number): Promise<any> {
 
 export async function createClubProfile(clubId: number, profileData: Partial<ClubProfile>): Promise<{ success: boolean; profile?: ClubProfile; message?: string }> {
     try {
-        const res = await fetch(`${API_BASE}/club-profile`, {
+        const res = await fetch(`${API_CLUBS}/club-profile`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include',
@@ -346,7 +347,7 @@ export async function createClubProfile(clubId: number, profileData: Partial<Clu
 
 export async function getClubProfile(clubId: number): Promise<{ success: boolean; profile: ClubProfile | null; message?: string }> {
     try {
-        const res = await fetch(`${API_BASE}/club-profile/${clubId}`, {
+        const res = await fetch(`${API_CLUBS}/club-profile/${clubId}`, {
             credentials: 'include',
         });
         const json = await res.json();
@@ -358,7 +359,7 @@ export async function getClubProfile(clubId: number): Promise<{ success: boolean
 
 export async function updateClubProfile(clubId: number, profileData: Partial<ClubProfile>): Promise<{ success: boolean; profile?: ClubProfile; message?: string }> {
     try {
-        const res = await fetch(`${API_BASE}/club-profile/${clubId}`, {
+        const res = await fetch(`${API_CLUBS}/club-profile/${clubId}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include',
@@ -372,7 +373,7 @@ export async function updateClubProfile(clubId: number, profileData: Partial<Clu
 
 export async function createExtraEventDetails(eventId: number, detailsData: Partial<ExtraEventDetail>): Promise<{ success: boolean; details?: ExtraEventDetail; message?: string }> {
     try {
-        const res = await fetch(`${API_BASE}/event-details/create-event-details`, {
+        const res = await fetch(`${API_CLUBS}/event-details/create-event-details`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include',
@@ -386,7 +387,7 @@ export async function createExtraEventDetails(eventId: number, detailsData: Part
 
 export async function getExtraEventDetails(eventId: number): Promise<{ success: boolean; details: ExtraEventDetail | null; message?: string }> {
     try {
-        const res = await fetch(`${API_BASE}/event-details/${eventId}`, {
+        const res = await fetch(`${API_CLUBS}/event-details/${eventId}`, {
             credentials: 'include',
         });
         const json = await res.json();
@@ -398,7 +399,7 @@ export async function getExtraEventDetails(eventId: number): Promise<{ success: 
 
 export async function updateExtraEventDetails(eventId: number, detailsData: Partial<ExtraEventDetail>): Promise<{ success: boolean; details?: ExtraEventDetail; message?: string }> {
     try {
-        const res = await fetch(`${API_BASE}/event-details/update-eventdetail`, {
+        const res = await fetch(`${API_CLUBS}/event-details/update-eventdetail`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include',
@@ -412,7 +413,7 @@ export async function updateExtraEventDetails(eventId: number, detailsData: Part
 
 export async function createEventCategory(clubId: number, data: Partial<EventCategory>): Promise<{ success: boolean; category?: EventCategory; message?: string }> {
     try {
-        const res = await fetch(`${API_BASE}/event-categories`, {
+        const res = await fetch(`${API_CLUBS}/event-categories`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include',
@@ -426,7 +427,7 @@ export async function createEventCategory(clubId: number, data: Partial<EventCat
 
 export async function getEventCategories(clubId: number): Promise<{ success: boolean; categories: EventCategory[]; message?: string }> {
     try {
-        const res = await fetch(`${API_BASE}/event-categories/${clubId}`, {
+        const res = await fetch(`${API_CLUBS}/event-categories/${clubId}`, {
             credentials: 'include',
         });
         return await res.json();
@@ -437,7 +438,7 @@ export async function getEventCategories(clubId: number): Promise<{ success: boo
 
 export async function getEventCategory(categoryId: number): Promise<{ success: boolean; category: EventCategory | null; message?: string }> {
     try {
-        const res = await fetch(`${API_BASE}/event-category/${categoryId}`, {
+        const res = await fetch(`${API_CLUBS}/event-category/${categoryId}`, {
             credentials: 'include',
         });
         return await res.json();
@@ -448,7 +449,7 @@ export async function getEventCategory(categoryId: number): Promise<{ success: b
 
 export async function updateEventCategory(categoryId: number, data: Partial<EventCategory>): Promise<{ success: boolean; category?: EventCategory; message?: string }> {
     try {
-        const res = await fetch(`${API_BASE}/event-category/${categoryId}`, {
+        const res = await fetch(`${API_CLUBS}/event-category/${categoryId}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include',
@@ -462,7 +463,7 @@ export async function updateEventCategory(categoryId: number, data: Partial<Even
 
 export async function deleteEventCategory(categoryId: number): Promise<{ success: boolean; message?: string }> {
     try {
-        const res = await fetch(`${API_BASE}/event-category/${categoryId}`, {
+        const res = await fetch(`${API_CLUBS}/event-category/${categoryId}`, {
             method: 'DELETE',
             credentials: 'include',
         });
@@ -472,18 +473,18 @@ export async function deleteEventCategory(categoryId: number): Promise<{ success
     }
 }
 
-export async function chatBot(query: string){
-    try{
-        const res = await fetch(`/api/chat`,{
+export async function chatBot(query: string) {
+    try {
+        const res = await fetch(`/api/chatbot/chat`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include',
-            body: JSON.stringify({ query}),
+            body: JSON.stringify({ query }),
         });
-        const data =  await res.json();
+        const data = await res.json();
 
         console.log(data);
-        return {success: true, ...data};
+        return { success: true, ...data };
     } catch (error: any) {
         return { success: false, message: error.message };
     }
