@@ -1,7 +1,5 @@
 {
   "compilerOptions": {
-    "target": "ESNext",
-    "module": "nodenext",
     "outDir": "dist",
     "skipLibCheck": true,
     "allowImportingTsExtensions": true,
