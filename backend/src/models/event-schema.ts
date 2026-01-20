@@ -12,7 +12,7 @@ import {
   jsonb
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
-import { user } from "./auth-schema.js";
+import { user } from "./auth-schema";
 
 export const eventStatusEnum = pgEnum("event_status", [
   "draft",
