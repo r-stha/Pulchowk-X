@@ -1323,3 +1323,18 @@ export async function sendMessageToConversation(
         return { success: false, message: error.message };
     }
 }
+
+export async function deleteConversation(
+    conversationId: number
+): Promise<{ success: boolean; message?: string }> {
+    try {
+        const res = await fetch(`${API_CHAT}/conversations/${conversationId}`, {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+        });
+        return await res.json();
+    } catch (error: any) {
+        return { success: false, message: error.message };
+    }
+}

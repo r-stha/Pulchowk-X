@@ -5,6 +5,7 @@
         getMessages,
         sendMessageToConversation,
         startConversation,
+        deleteConversation,
         type ChatConversation,
         type ChatMessage,
     } from "../lib/api";
@@ -26,6 +27,11 @@
     let sendingMessage = $state(false);
     let pollingInterval: ReturnType<typeof setInterval> | null = null;
     let messagesContainer: HTMLDivElement;
+
+    // Delete conversation state
+    let showDeleteModal = $state(false);
+    let conversationToDelete = $state<ChatConversation | null>(null);
+    let deletingConversation = $state(false);
 
     // Redirect if not logged in
     $effect(() => {
@@ -118,14 +124,14 @@
         conversationsQuery.data?.find((c) => c.id === selectedConversationId),
     );
 
-    const otherUser = $derived(() => {
+    const otherUser = $derived.by(() => {
         if (!selectedConversation || !$session.data?.user) return null;
         return selectedConversation.buyerId === $session.data.user.id
             ? selectedConversation.seller
             : selectedConversation.buyer;
     });
 
-    const isBuyer = $derived(() => {
+    const isBuyer = $derived.by(() => {
         if (!selectedConversation || !$session.data?.user) return false;
         return selectedConversation.buyerId === $session.data.user.id;
     });
@@ -230,6 +236,44 @@
     function selectConversation(convId: number) {
         selectedConversationId = convId;
     }
+
+    function openDeleteModal(conv: ChatConversation, e: Event) {
+        e.stopPropagation();
+        conversationToDelete = conv;
+        showDeleteModal = true;
+    }
+
+    function closeDeleteModal() {
+        showDeleteModal = false;
+        conversationToDelete = null;
+    }
+
+    async function handleDeleteConversation() {
+        if (!conversationToDelete || deletingConversation) return;
+
+        deletingConversation = true;
+        try {
+            const result = await deleteConversation(conversationToDelete.id);
+            if (result.success) {
+                // If we're viewing this conversation, deselect it
+                if (selectedConversationId === conversationToDelete.id) {
+                    selectedConversationId = null;
+                }
+                // Refresh the conversation list
+                await queryClient.invalidateQueries({
+                    queryKey: ["chat-conversations"],
+                });
+                closeDeleteModal();
+            } else {
+                alert(result.message || "Failed to delete conversation");
+            }
+        } catch (error) {
+            console.error("Error deleting conversation:", error);
+            alert("An error occurred while deleting the conversation.");
+        } finally {
+            deletingConversation = false;
+        }
+    }
 </script>
 
 <div class="min-h-[calc(100vh-4rem)] bg-gray-50/50">
@@ -293,9 +337,14 @@
                                         ? conv.seller
                                         : conv.buyer}
                                 {@const lastMessage = conv.messages?.[0]}
-                                <button
+                                <div
+                                    role="button"
+                                    tabindex="0"
                                     onclick={() => selectConversation(conv.id)}
-                                    class="w-full p-4 flex items-start gap-3 text-left hover:bg-gray-50 transition-colors border-b border-gray-50 {selectedConversationId ===
+                                    onkeydown={(e) =>
+                                        (e.key === "Enter" || e.key === " ") &&
+                                        selectConversation(conv.id)}
+                                    class="w-full p-4 flex items-start gap-3 text-left hover:bg-gray-50 cursor-pointer transition-colors border-b border-gray-50 relative group {selectedConversationId ===
                                     conv.id
                                         ? 'bg-blue-50'
                                         : ''}"
@@ -315,7 +364,7 @@
                                         </div>
                                     {/if}
 
-                                    <div class="flex-1 min-w-0">
+                                    <div class="flex-1 min-w-0 pr-8">
                                         <div
                                             class="flex items-center justify-between gap-2"
                                         >
@@ -348,7 +397,18 @@
                                             </p>
                                         {/if}
                                     </div>
-                                </button>
+
+                                    <!-- Delete Button -->
+                                    <button
+                                        onclick={(e) => openDeleteModal(conv, e)}
+                                        class="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-all opacity-0 group-hover:opacity-100 focus:opacity-100"
+                                        title="Delete conversation"
+                                    >
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                        </svg>
+                                    </button>
+                                </div>
                             {/each}
                         {/if}
                     </div>
@@ -385,10 +445,10 @@
                                 </svg>
                             </button>
 
-                            {#if otherUser()}
-                                {#if otherUser()?.image}
+                            {#if otherUser}
+                                {#if otherUser?.image}
                                     <img
-                                        src={otherUser()?.image}
+                                        src={otherUser?.image}
                                         alt=""
                                         class="w-10 h-10 rounded-full"
                                     />
@@ -396,18 +456,18 @@
                                     <div
                                         class="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white font-bold"
                                     >
-                                        {otherUser()?.name?.charAt(0) || "?"}
+                                        {otherUser?.name?.charAt(0) || "?"}
                                     </div>
                                 {/if}
                                 <div class="flex-1 min-w-0">
                                     <p class="font-medium text-gray-900">
-                                        {otherUser()?.name}
+                                        {otherUser?.name}
                                     </p>
                                     {#if selectedConversation.listing}
                                         <p
                                             class="text-xs text-gray-500 truncate"
                                         >
-                                            {isBuyer() ? "Seller" : "Buyer"} • {selectedConversation
+                                            {isBuyer ? "Seller" : "Buyer"} • {selectedConversation
                                                 .listing.title}
                                         </p>
                                     {/if}
@@ -696,3 +756,48 @@
         </div>
     </div>
 </div>
+
+<!-- Delete Confirmation Modal -->
+{#if showDeleteModal && conversationToDelete}
+    <div
+        class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] flex items-center justify-center p-4"
+        in:fade={{ duration: 200 }}
+    >
+        <div
+            class="bg-white rounded-3xl shadow-2xl max-w-sm w-full p-6 overflow-hidden relative"
+            in:fly={{ y: 20, duration: 300 }}
+        >
+            <div class="text-center">
+                <div class="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                </div>
+                <h3 class="text-xl font-bold text-gray-900 mb-2">Delete Chat?</h3>
+                <p class="text-sm text-gray-500 mb-6">
+                    This will remove the conversation for you. It will only be permanently deleted if the other person also deletes it.
+                </p>
+            </div>
+
+            <div class="flex gap-3">
+                <button
+                    onclick={closeDeleteModal}
+                    class="flex-1 px-4 py-3 border border-gray-200 text-gray-600 font-medium rounded-xl hover:bg-gray-50 transition-all"
+                >
+                    Cancel
+                </button>
+                <button
+                    onclick={handleDeleteConversation}
+                    disabled={deletingConversation}
+                    class="flex-1 px-4 py-3 bg-red-500 text-white font-medium rounded-xl hover:bg-red-600 shadow-lg shadow-red-200 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center"
+                >
+                    {#if deletingConversation}
+                        <div class="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    {:else}
+                        Delete
+                    {/if}
+                </button>
+            </div>
+        </div>
+    </div>
+{/if}
