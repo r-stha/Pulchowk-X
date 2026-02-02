@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { onMount } from "svelte";
     import { route as routeAction, goto } from "@mateothegreat/svelte5-router";
     import {
         getBookListingById,
@@ -26,6 +27,10 @@
     const bookId = $derived(parseInt(route.result.path.params.bookId) || 0);
 
     const session = authClient.useSession();
+
+    onMount(() => {
+        window.scrollTo(0, 0);
+    });
     const queryClient = useQueryClient();
 
     let savingBook = $state(false);
