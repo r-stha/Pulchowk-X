@@ -17,7 +17,8 @@ import {
     UploadClubLogo,
     DeleteClubLogo,
     UploadEventBanner,
-    ExportRegisteredStudents
+    ExportRegisteredStudents,
+    CancelEvent
 } from "../controllers/event.controller.js";
 import { requireAuth, requireAdmin } from "../middleware/auth.middleware.js";
 import multer from "multer";
@@ -43,6 +44,7 @@ router.post("/cancel-registration", cancelRegistration);
 router.post("/:eventId/upload-banner", requireAuth, upload.single('banner'), UploadEventBanner); // Generic upload
 router.post("/enrollment", eventEnrollment);
 router.get("/:eventId/export-students", ExportRegisteredStudents);
+router.put("/:eventId/cancel", requireAuth, CancelEvent);
 
 
 export default router;

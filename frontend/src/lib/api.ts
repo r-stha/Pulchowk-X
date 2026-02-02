@@ -396,6 +396,19 @@ export async function getRegisteredStudents(eventId: number): Promise<any> {
     }
 }
 
+export async function cancelEvent(eventId: number): Promise<{ success: boolean; message?: string }> {
+    try {
+        const res = await fetch(`${API_EVENTS}/${eventId}/cancel`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+        });
+        return await res.json();
+    } catch (error: any) {
+        return { success: false, message: error.message };
+    }
+}
+
 export async function createClubProfile(clubId: number, profileData: Partial<ClubProfile>): Promise<{ success: boolean; profile?: ClubProfile; message?: string }> {
     try {
         const res = await fetch(`${API_CLUBS}/club-profile`, {

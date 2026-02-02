@@ -113,10 +113,17 @@
       ongoing: ClubEvent[];
       upcoming: ClubEvent[];
       completed: ClubEvent[];
+      cancelled: ClubEvent[];
     } => {
       if (!eventsQuery.data) {
-        return { ongoing: [], upcoming: [], completed: [] };
+        return { ongoing: [], upcoming: [], completed: [], cancelled: [] };
       }
+
+      const ongoing: ClubEvent[] = [];
+      const upcoming: ClubEvent[] = [];
+      const completed: ClubEvent[] = [];
+      const cancelled: ClubEvent[] = [];
+
       const now = new Date();
       const sorted: ClubEvent[] = [...eventsQuery.data].sort(
         (a, b) =>
@@ -124,32 +131,23 @@
           new Date(a.eventStartTime).getTime(),
       );
 
-      return {
-        ongoing: sorted.filter((e) => {
-          const start = new Date(e.eventStartTime);
-          const end = new Date(e.eventEndTime);
-          return (
-            (e.status === "ongoing" || (start <= now && end >= now)) &&
-            e.status !== "completed" &&
-            e.status !== "cancelled"
-          );
-        }),
-        upcoming: sorted.filter((e) => {
-          const start = new Date(e.eventStartTime);
-          return (
-            start > now &&
-            e.status !== "completed" &&
-            e.status !== "cancelled" &&
-            e.status !== "ongoing"
-          );
-        }),
-        completed: sorted.filter((e) => {
-          const end = new Date(e.eventEndTime);
-          return (
-            e.status === "completed" || end < now || e.status === "cancelled"
-          );
-        }),
-      };
+      sorted.forEach((e) => {
+        const start = new Date(e.eventStartTime);
+        const end = new Date(e.eventEndTime);
+        const status = e.status?.toLowerCase() || "";
+
+        if (status === "cancelled") {
+          cancelled.push(e);
+        } else if (status === "completed" || end < now) {
+          completed.push(e);
+        } else if (status === "ongoing" || (start <= now && end >= now)) {
+          ongoing.push(e);
+        } else {
+          upcoming.push(e);
+        }
+      });
+
+      return { ongoing, upcoming, completed, cancelled };
     },
   );
 </script>
@@ -375,10 +373,39 @@
                 Completed Events
               </h2>
               <div class="h-1 flex-1 bg-gray-100 rounded-full"></div>
+              <span
+                class="px-3 py-1 bg-gray-100 text-gray-600 text-xs font-bold rounded-full uppercase"
+                >{categorizedEvents.completed.length} Events</span
+              >
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {#each categorizedEvents.completed as event, i (event.id)}
                 <EventCard {event} {clubId} index={i} isCompleted={true} />
+              {/each}
+            </div>
+          </section>
+        {/if}
+
+        <!-- Cancelled Events -->
+        {#if categorizedEvents.cancelled.length > 0}
+          <section in:fade>
+            <div class="flex items-center gap-4 mb-8 text-rose-400">
+              <h2 class="text-2xl font-black tracking-tight">
+                Cancelled Events
+              </h2>
+              <div
+                class="h-1 flex-1 bg-linear-to-r from-rose-500/20 to-transparent rounded-full"
+              ></div>
+              <span
+                class="px-3 py-1 bg-rose-100 text-rose-700 text-xs font-bold rounded-full uppercase"
+                >{categorizedEvents.cancelled.length} Cancelled</span
+              >
+            </div>
+            <div
+              class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 opacity-75 grayscale-20"
+            >
+              {#each categorizedEvents.cancelled as event, i (event.id)}
+                <EventCard {event} {clubId} index={i} />
               {/each}
             </div>
           </section>
