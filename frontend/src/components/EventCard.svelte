@@ -6,6 +6,7 @@
     formatEventTime,
     parseEventDateTime,
   } from "../lib/event-dates";
+  import { getEventStatusLabel } from "../lib/event-status";
 
   interface Props {
     event: ClubEvent;
@@ -83,7 +84,7 @@
       <span
         class={`px-3 py-1 text-[10px] font-bold rounded-full shadow-sm border ${getStatusColor(event.status)} uppercase tracking-widest backdrop-blur-md bg-white/90`}
       >
-        {event.status}
+        {getEventStatusLabel(event.status)}
       </span>
     </div>
 

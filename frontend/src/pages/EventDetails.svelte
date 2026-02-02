@@ -25,6 +25,7 @@
     formatEventTime,
     parseEventDateTime,
   } from "../lib/event-dates";
+  import { getEventStatusLabel } from "../lib/event-status";
 
   const { route } = $props();
   const clubId = $derived(route.result.path.params.clubId);
@@ -678,7 +679,7 @@
           <span
             class={`px-4 py-1.5 text-sm font-bold rounded-full shadow-lg border backdrop-blur-md ${getStatusColor(event.status)} uppercase tracking-wider`}
           >
-            {event.status}
+            {getEventStatusLabel(event.status)}
           </span>
         </div>
 
