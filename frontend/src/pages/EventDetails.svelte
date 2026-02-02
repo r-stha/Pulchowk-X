@@ -25,6 +25,7 @@
     formatEventTime,
     parseEventDateTime,
   } from "../lib/event-dates";
+  import { getEventStatusLabel } from "../lib/event-status";
 
   const { route } = $props();
   const clubId = $derived(route.result.path.params.clubId);
@@ -528,6 +529,7 @@
   function getStatusColor(status: string): string {
     switch (status) {
       case "published":
+      case "upcoming":
         return "bg-emerald-100 text-emerald-800 border-emerald-200";
       case "draft":
         return "bg-amber-100 text-amber-800 border-amber-200";
@@ -684,7 +686,7 @@
           <span
             class={`px-4 py-1.5 text-sm font-bold rounded-full shadow-lg border backdrop-blur-md ${getStatusColor(event.status)} uppercase tracking-wider`}
           >
-            {event.status}
+            {getEventStatusLabel(event.status)}
           </span>
         </div>
 
