@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { goto, query } from "@mateothegreat/svelte5-router";
+  import { goto, query, replace } from "@mateothegreat/svelte5-router";
   import Google from "../icons/google.svelte";
   import { authClient } from "../lib/auth-client";
   import ErrorToast from "../components/ErrorToast.svelte";
@@ -11,7 +11,9 @@
 
   $effect(() => {
     if (toastError === "login_required") {
-      showError = true;
+      goto("/register", {
+        replace: true,
+      });
     }
   });
 
