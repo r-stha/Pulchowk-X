@@ -11,13 +11,9 @@ import userRoutes from './routes/user.route.js'
 import bookRoutes from './routes/books.route.js'
 import classroomRoutes from './routes/classroom.route.js'
 import chatRoutes from './routes/chat.route.js'
-import { initializeSocketIO } from './services/socket.service.js'
 
 const app = express()
 const httpServer = createServer(app)
-
-// Initialize Socket.IO for real-time chat
-initializeSocketIO(httpServer)
 
 const __dirname = import.meta.dirname
 
