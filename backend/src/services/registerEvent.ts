@@ -1,11 +1,8 @@
-import { registerStudentForEventInput } from "../types/events.js";
 import { db } from "../lib/db.js";
 import { eq, sql, desc, and, asc } from "drizzle-orm";
 import { eventRegistrations, events } from "../models/event-schema.js";
 
-export async function registerStudentForEvent(registerData: registerStudentForEventInput) {
-    const { authStudentId: userId, eventId } = registerData;
-
+export async function registerStudentForEvent(userId: string, eventId: number) {
     try {
         const event = await db.query.events.findFirst({
             where: eq(events.id, eventId),
@@ -102,15 +99,7 @@ export async function getEventRegistrations(eventId: number) {
         orderBy: [desc(eventRegistrations.registeredAt)],
     });
 
-    if (registrations.length === 0) {
-        return {
-            success: true,
-            message: "No registrations yet..",
-            registrations: []
-        }
-    }
-
-    return registrations.map(reg => ({
+    const mapped = registrations.map(reg => ({
         registrationId: reg.id,
         status: reg.status,
         registeredAt: reg.registeredAt,
@@ -121,11 +110,15 @@ export async function getEventRegistrations(eventId: number) {
             email: reg.user.email,
         }
     }));
+
+    return {
+        success: true,
+        registrations: mapped,
+        message: registrations.length === 0 ? "No registrations yet.." : undefined
+    };
 }
 
-export async function cancelEventRegistration(registerData: registerStudentForEventInput) {
-    const { authStudentId: userId, eventId } = registerData;
-
+export async function cancelEventRegistration(userId: string, eventId: number) {
     try {
         await db.update(eventRegistrations)
             .set({
@@ -160,11 +153,11 @@ export async function cancelEventRegistration(registerData: registerStudentForEv
     }
 }
 
-export async function getStudentActiveRegistration(authStudentId: string) {
+export async function getStudentActiveRegistration(userId: string) {
     try {
         const registrations = await db.query.eventRegistrations.findMany({
             where: and(
-                eq(eventRegistrations.userId, authStudentId),
+                eq(eventRegistrations.userId, userId),
                 eq(eventRegistrations.status, 'registered')
             ),
             with: {

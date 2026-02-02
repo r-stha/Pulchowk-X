@@ -239,7 +239,6 @@
       let initialBannerUrl = bannerSource === "url" ? bannerUrl : undefined;
 
       const result = await createEvent(
-        $session.data.user.id,
         parseInt(clubId),
         {
           title,

@@ -372,7 +372,7 @@
                                     <p
                                         class="text-xs text-blue-600 truncate mt-0.5"
                                     >
-                                        📚 {conv.listing.title}
+                                        Book: {conv.listing.title}
                                     </p>
                                 {/if}
                                 {#if lastMessage}

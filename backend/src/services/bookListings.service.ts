@@ -542,6 +542,7 @@ export const addBookImage = async (
 
 export const deleteBookImage = async (
     imageId: number,
+    listingId: number,
     sellerId: string
 ) => {
     try {
@@ -557,6 +558,20 @@ export const deleteBookImage = async (
             return {
                 success: false,
                 message: "Image not found.",
+            };
+        }
+
+        if (image.listingId !== listingId) {
+            return {
+                success: false,
+                message: "Image does not belong to this listing.",
+            };
+        }
+
+        if (!image.listing || image.listing.sellerId !== sellerId) {
+            return {
+                success: false,
+                message: "You are not authorized to delete this image.",
             };
         }
 

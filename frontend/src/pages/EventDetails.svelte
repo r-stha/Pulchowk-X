@@ -110,8 +110,8 @@
   async function loadRegisteredStudents() {
     try {
       const studentsResult = await getRegisteredStudents(parseInt(eventId));
-      if (Array.isArray(studentsResult)) {
-        registeredStudents = studentsResult;
+      if (studentsResult.success) {
+        registeredStudents = studentsResult.registrations || [];
       }
     } catch (e) {
       console.error("Failed to load registered students", e);
@@ -375,7 +375,7 @@
     if (!userId) return;
 
     try {
-      const result = await getEnrollments(userId);
+      const result = await getEnrollments();
       if (result.success && result.registrations) {
         isRegistered = result.registrations.some(
           (reg) => reg.eventId === parseInt(eventId),
@@ -396,7 +396,7 @@
     actionMessage = null;
 
     try {
-      const result = await registerForEvent(userId, parseInt(eventId));
+      const result = await registerForEvent(parseInt(eventId));
       if (result.success) {
         isRegistered = true;
         actionMessage = {
@@ -428,10 +428,7 @@
     actionMessage = null;
 
     try {
-      const result = await cancelRegistration(
-        $session.data.user.id,
-        parseInt(eventId),
-      );
+      const result = await cancelRegistration(parseInt(eventId));
       if (result.success) {
         isRegistered = false;
         actionMessage = {

@@ -35,14 +35,14 @@ router.get("/clubs/:clubId", existingClub);
 router.put('/clubs/:clubId', requireAuth, UpdateClubInfo);
 
 router.get("/events/:clubId", clubEvents);
-router.post("/create-event", CreateEvent)
+router.post("/create-event", requireAuth, CreateEvent)
 router.get("/get-upcoming-events", upcomingEvents);
 router.get("/all-events", allEvents);
-router.post("/register-event", eventRegistration);
+router.post("/register-event", requireAuth, eventRegistration);
 router.post("/registered-student", registeredStudent);
-router.post("/cancel-registration", cancelRegistration);
+router.post("/cancel-registration", requireAuth, cancelRegistration);
 router.post("/:eventId/upload-banner", requireAuth, upload.single('banner'), UploadEventBanner); // Generic upload
-router.post("/enrollment", eventEnrollment);
+router.post("/enrollment", requireAuth, eventEnrollment);
 router.get("/:eventId/export-students", ExportRegisteredStudents);
 router.put("/:eventId/cancel", requireAuth, CancelEvent);
 
