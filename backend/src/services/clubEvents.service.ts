@@ -711,3 +711,58 @@ export async function handleEventBannerFileUpload(
         }
     }
 }
+
+export async function cancelEvent(authId: string, eventId: number) {
+    try {
+        const event = await db.query.events.findFirst({
+            where: eq(events.id, eventId),
+            with: {
+                club: true
+            }
+        });
+
+        if (!event) {
+            return { success: false, message: "Event not found" };
+        }
+
+        const isPrimaryOwner = event.club.authClubId === authId;
+
+        const adminEntry = await db.query.clubAdmins.findFirst({
+            where: and(
+                eq(clubAdmins.clubId, event.clubId),
+                eq(clubAdmins.userId, authId)
+            )
+        });
+
+        if (!isPrimaryOwner && !adminEntry) {
+            return { success: false, message: "Unauthorized: Only club owners or admins can cancel events" };
+        }
+
+        if (event.status === 'cancelled') {
+            return { success: false, message: "Event is already cancelled" };
+        }
+        if (event.status === 'completed') {
+            return { success: false, message: "Cannot cancel a completed event" };
+        }
+
+        await db
+            .update(events)
+            .set({
+                status: 'cancelled',
+                updatedAt: new Date()
+            })
+            .where(eq(events.id, eventId));
+
+        return {
+            success: true,
+            message: "Event cancelled successfully"
+        };
+
+    } catch (error: any) {
+        console.error("Cancel event error:", error);
+        return {
+            success: false,
+            message: error.message || "Failed to cancel event"
+        };
+    }
+}
