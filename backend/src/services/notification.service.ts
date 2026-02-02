@@ -10,6 +10,11 @@ let isFirebaseInitialized = false;
 
 function initializeFirebase() {
   try {
+    if (admin.apps.length > 0) {
+      isFirebaseInitialized = true;
+      return;
+    }
+
     let serviceAccount: any;
 
     if (ENV.FIREBASE_SERVICE_ACCOUNT_JSON) {

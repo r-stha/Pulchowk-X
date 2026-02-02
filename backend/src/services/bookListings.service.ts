@@ -2,6 +2,7 @@ import { db } from "../lib/db.js";
 import { and, desc, eq, ilike, or, sql, asc, gte, lte } from "drizzle-orm";
 import { bookListings, bookImages, bookCategories, savedBooks, listingViews } from "../models/book_buy_sell-schema.js";
 import { sendToTopic } from "./notification.service.js";
+import { unwrapOne } from "../lib/type-utils.js";
 
 
 export interface CreateListingData {
@@ -542,6 +543,7 @@ export const addBookImage = async (
 
 export const deleteBookImage = async (
     imageId: number,
+    listingId: number,
     sellerId: string
 ) => {
     try {
@@ -557,6 +559,21 @@ export const deleteBookImage = async (
             return {
                 success: false,
                 message: "Image not found.",
+            };
+        }
+
+        if (image.listingId !== listingId) {
+            return {
+                success: false,
+                message: "Image does not belong to this listing.",
+            };
+        }
+
+        const listing = unwrapOne(image.listing);
+        if (!listing || listing.sellerId !== sellerId) {
+            return {
+                success: false,
+                message: "You are not authorized to delete this image.",
             };
         }
 
