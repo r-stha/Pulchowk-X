@@ -1,6 +1,7 @@
 import { db } from "../lib/db.js";
 import { eq, sql, desc, and, asc } from "drizzle-orm";
 import { eventRegistrations, events } from "../models/event-schema.js";
+import { unwrapOne } from "../lib/type-utils.js";
 
 export async function registerStudentForEvent(userId: string, eventId: number) {
     try {
@@ -99,17 +100,20 @@ export async function getEventRegistrations(eventId: number) {
         orderBy: [desc(eventRegistrations.registeredAt)],
     });
 
-    const mapped = registrations.map(reg => ({
-        registrationId: reg.id,
-        status: reg.status,
-        registeredAt: reg.registeredAt,
-        attendedAt: reg.attendedAt,
-        student: {
-            id: reg.user.id,
-            name: reg.user.name,
-            email: reg.user.email,
-        }
-    }));
+    const mapped = registrations.map(reg => {
+        const student = unwrapOne(reg.user);
+        return {
+            registrationId: reg.id,
+            status: reg.status,
+            registeredAt: reg.registeredAt,
+            attendedAt: reg.attendedAt,
+            student: {
+                id: student?.id,
+                name: student?.name,
+                email: student?.email,
+            }
+        };
+    });
 
     return {
         success: true,
@@ -228,11 +232,14 @@ export async function getEventRegistrationsForExport(eventId: number) {
 
     return {
         eventTitle: event.title,
-        data: registrations.map(reg => ({
-            Name: reg.user.name,
-            Email: reg.user.email,
-            Status: reg.status,
-            Date: reg.registeredAt ? new Date(reg.registeredAt).toLocaleDateString() : 'N/A'
-        }))
+        data: registrations.map(reg => {
+            const student = unwrapOne(reg.user);
+            return {
+                Name: student?.name || "",
+                Email: student?.email || "",
+                Status: reg.status,
+                Date: reg.registeredAt ? new Date(reg.registeredAt).toLocaleDateString() : 'N/A'
+            };
+        })
     };
 }

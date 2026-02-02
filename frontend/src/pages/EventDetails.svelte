@@ -1515,10 +1515,12 @@
           class="fixed inset-0 z-[100] flex items-center justify-center px-4"
           transition:fade={{ duration: 200 }}
         >
-          <div
+          <button
+            type="button"
             class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+            aria-label="Close cancel event modal"
             onclick={() => (showCancelModal = false)}
-          ></div>
+          ></button>
           <div
             class="bg-white rounded-3xl shadow-2xl w-full max-w-md p-8 relative z-10 overflow-hidden"
             in:fly={{ y: 20, duration: 400, easing: quintOut }}
@@ -1615,10 +1617,11 @@
                   First impressions are everything.
                 </p>
               </div>
-              <button
-                onclick={() => (isEditingBanner = false)}
-                class="p-3 hover:bg-white rounded-2xl transition-all hover:shadow-sm active:scale-95 group"
-              >
+        <button
+          onclick={() => (isEditingBanner = false)}
+          class="p-3 hover:bg-white rounded-2xl transition-all hover:shadow-sm active:scale-95 group"
+          aria-label="Close banner editor"
+        >
                 <svg
                   class="w-6 h-6 text-gray-400 group-hover:text-gray-900 transition-colors"
                   fill="none"
@@ -1639,10 +1642,11 @@
               <!-- Live Preview Component -->
               <div class="space-y-4">
                 <div class="flex items-center justify-between px-1">
-                  <label
-                    class="block text-sm font-bold text-gray-900 uppercase tracking-widest"
-                    >Live Preview</label
-                  >
+            <p
+              class="block text-sm font-bold text-gray-900 uppercase tracking-widest"
+            >
+              Live Preview
+            </p>
                   <span
                     class="text-[10px] font-black text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md uppercase"
                     >Hero Display</span

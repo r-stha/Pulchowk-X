@@ -2,6 +2,7 @@ import { db } from "../lib/db.js";
 import { and, desc, eq, ilike, or, sql, asc, gte, lte } from "drizzle-orm";
 import { bookListings, bookImages, bookCategories, savedBooks, listingViews } from "../models/book_buy_sell-schema.js";
 import { sendToTopic } from "./notification.service.js";
+import { unwrapOne } from "../lib/type-utils.js";
 
 
 export interface CreateListingData {
@@ -568,7 +569,8 @@ export const deleteBookImage = async (
             };
         }
 
-        if (!image.listing || image.listing.sellerId !== sellerId) {
+        const listing = unwrapOne(image.listing);
+        if (!listing || listing.sellerId !== sellerId) {
             return {
                 success: false,
                 message: "You are not authorized to delete this image.",
