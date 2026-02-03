@@ -2,6 +2,8 @@ CREATE TYPE "event_status_new" AS ENUM ('draft', 'cancelled');
 --> statement-breakpoint
 ALTER TABLE "events" ALTER COLUMN "status" DROP DEFAULT;
 --> statement-breakpoint
+ALTER TABLE "events" ALTER COLUMN "status" DROP NOT NULL;
+--> statement-breakpoint
 ALTER TABLE "events"
   ALTER COLUMN "status" TYPE "event_status_new"
   USING (
@@ -10,8 +12,6 @@ ALTER TABLE "events"
       ELSE NULL
     END
   );
---> statement-breakpoint
-ALTER TABLE "events" ALTER COLUMN "status" DROP NOT NULL;
 --> statement-breakpoint
 DROP TYPE "event_status";
 --> statement-breakpoint

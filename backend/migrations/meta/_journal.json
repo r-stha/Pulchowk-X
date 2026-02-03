@@ -162,6 +162,13 @@
       "when": 1769959009843,
       "tag": "0022_sparkling_newton_destine",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1770122966063,
+      "tag": "0023_remarkable_white_tiger",
+      "breakpoints": true
     }
   ]
 }
