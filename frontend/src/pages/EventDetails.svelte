@@ -528,7 +528,6 @@
 
   function getStatusColor(status: string): string {
     switch (status) {
-      case "published":
       case "upcoming":
         return "bg-emerald-100 text-emerald-800 border-emerald-200";
       case "draft":

@@ -16,10 +16,6 @@ import { user } from "./auth-schema.js";
 
 export const eventStatusEnum = pgEnum("event_status", [
   "draft",
-  "published",
-  "upcoming",
-  "ongoing",
-  "completed",
   "cancelled",
 ]);
 
@@ -77,7 +73,7 @@ export const events = pgTable("events", {
   title: varchar("title", { length: 255 }).notNull(),
   description: text("description"),
   eventType: varchar("event_type", { length: 50 }).notNull(),
-  status: eventStatusEnum("status").default("draft").notNull(),
+  status: eventStatusEnum("status"),
   venue: varchar("venue", { length: 255 }),
   maxParticipants: integer("max_participants"),
   registrationDeadline: timestamp("registration_deadline", {

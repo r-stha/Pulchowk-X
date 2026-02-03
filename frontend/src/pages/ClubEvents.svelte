@@ -77,7 +77,6 @@
 
   function getStatusColor(status: string): string {
     switch (status) {
-      case "published":
       case "upcoming":
         return "bg-emerald-100 text-emerald-800 border-emerald-200";
       case "draft":
@@ -119,6 +118,10 @@
         const start = parseEventDateTime(e.eventStartTime);
         const end = parseEventDateTime(e.eventEndTime);
         const status = (e.status || "").toLowerCase().trim();
+
+        if (status === "draft") {
+          return;
+        }
 
         // Check cancelled first - cancelled events should never go to other categories
         if (status === "cancelled") {

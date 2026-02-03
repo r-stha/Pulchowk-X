@@ -47,6 +47,7 @@
           const end = parseEventDateTime(e.eventEndTime);
           return (
             (e.status === "ongoing" || (start <= now && end >= now)) &&
+            e.status !== "draft" &&
             e.status !== "completed" &&
             e.status !== "cancelled"
           );
@@ -55,6 +56,7 @@
           const start = parseEventDateTime(e.eventStartTime);
           return (
             start > now &&
+            e.status !== "draft" &&
             e.status !== "completed" &&
             e.status !== "cancelled" &&
             e.status !== "ongoing"
@@ -63,7 +65,8 @@
         completed: sorted.filter((e) => {
           const end = parseEventDateTime(e.eventEndTime);
           return (
-            e.status === "completed" || end < now || e.status === "cancelled"
+            e.status !== "draft" &&
+            (e.status === "completed" || end < now || e.status === "cancelled")
           );
         }),
       };

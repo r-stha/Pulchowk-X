@@ -1,3 +1,5 @@
+import { deriveEventStatus } from "./event-status";
+
 const API_EVENTS = '/api/events';
 const API_CLUBS = '/api/clubs';
 const API_BOOKS = '/api/books';
@@ -36,6 +38,13 @@ export interface ClubEvent {
     isRegistrationOpen: boolean;
     createdAt: string;
     club?: Club;
+}
+
+function withDerivedStatus(event: ClubEvent): ClubEvent {
+    return {
+        ...event,
+        status: deriveEventStatus(event),
+    };
 }
 
 export interface ClubProfile {
@@ -194,6 +203,9 @@ export async function getClubEvents(clubId: number): Promise<{ success: boolean;
     const clone = res.clone();
     try {
         const json = await res.json();
+        if (json?.data?.clubEvents) {
+            json.data.clubEvents = json.data.clubEvents.map(withDerivedStatus);
+        }
         return json.data;
     } catch (e) {
         console.error("Failed to parse getClubEvents response", await clone.text());
@@ -208,6 +220,9 @@ export async function getUpcomingEvents(): Promise<{ success: boolean; upcomingE
             credentials: 'include',
         });
         const json = await res.json();
+        if (json?.data?.upcomingEvents) {
+            json.data.upcomingEvents = json.data.upcomingEvents.map(withDerivedStatus);
+        }
         return json.data;
     } catch (error: any) {
         console.error("Error", error.message);
@@ -222,6 +237,9 @@ export async function getAllEvents(): Promise<{ success: boolean; allEvents?: Cl
             credentials: 'include',
         });
         const json = await res.json();
+        if (json?.data?.allEvents) {
+            json.data.allEvents = json.data.allEvents.map(withDerivedStatus);
+        }
         return json.data;
     } catch (error: any) {
         console.error(error.message);
@@ -260,6 +278,9 @@ export async function createEvent(clubId: number, eventData: {
         const json = await res.json();
         console.log('Response json:', json);
 
+        if (json?.data?.event) {
+            json.data.event = withDerivedStatus(json.data.event);
+        }
         return json.data;
     } catch (error: any) {
         console.error('Error:', error.message);

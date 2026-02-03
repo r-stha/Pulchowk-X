@@ -3,6 +3,7 @@ import { db } from "../lib/db.js";
 import { eq, and } from "drizzle-orm";
 import { clubs, events, clubAdmins } from "../models/event-schema.js";
 import { sendEventNotification } from "./notification.service.js";
+import { deriveEventStatus } from "../lib/event-status.js";
 
 
 
@@ -81,7 +82,6 @@ export async function createEvent(userId: string, clubId: number, eventInput: Cr
             eventEndTime: eventEndTime,
             bannerUrl: eventInput.bannerUrl || null,
             externalRegistrationLink: eventInput.externalRegistrationLink || null,
-            status: 'upcoming' as const,
         };
 
         const [event] = await db.insert(events).values(insertData).returning();
@@ -93,7 +93,10 @@ export async function createEvent(userId: string, clubId: number, eventInput: Cr
 
         return {
             success: true,
-            event,
+            event: {
+                ...event,
+                status: deriveEventStatus(event),
+            },
             message: 'Event created successfully',
         };
 

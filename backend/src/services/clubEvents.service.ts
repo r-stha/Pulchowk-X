@@ -11,7 +11,8 @@ import {
     sql,
     and,
     or,
-    asc
+    asc,
+    isNull,
 } from "drizzle-orm"; // updated imports
 import { user } from "../models/auth-schema.js";
 import {
@@ -24,6 +25,7 @@ import {
     isValidImageUrl
 } from "../config/cloudinary.js";
 import { unwrapOne } from "../lib/type-utils.js";
+import { deriveEventStatus } from "../lib/event-status.js";
 
 
 const { MAX_FILE_SIZE, ALLOWED_TYPES } = UPLOAD_CONSTANTS;
@@ -151,7 +153,7 @@ export async function getClubs() {
                 logoUrl: clubs.logoUrl,
                 upcomingEvents: sql<number>`
                     COUNT(DISTINCT CASE
-                    WHEN ${events.status} != 'cancelled' 
+                    WHEN ${events.status} IS NULL
                     AND (${events.eventStartTime} > NOW() OR (${events.eventStartTime} <= NOW() AND ${events.eventEndTime} >= NOW()))
                     THEN ${events.id}
                     END)`,
@@ -247,13 +249,13 @@ export async function getClubById(clubId: number) {
                 createdAt: clubs.createdAt,
                 upcomingEvents: sql <number>`
                     COUNT(DISTINCT CASE
-                    WHEN ${events.status} != 'cancelled' 
+                    WHEN ${events.status} IS NULL 
                     AND (${events.eventStartTime} > NOW() OR (${events.eventStartTime} <= NOW() AND ${events.eventEndTime} >= NOW()))
                     THEN ${events.id}
                     END)`,
                 completedEvents: sql<number>`
                     COUNT(DISTINCT CASE 
-                    WHEN ${events.status} != 'cancelled' 
+                    WHEN ${events.status} IS NULL 
                     AND ${events.eventEndTime} < NOW()
                     THEN ${events.id} 
                     END)
@@ -478,7 +480,10 @@ export async function getClubEvents(clubId: number) {
         }
 
         const clubEvents = await db.query.events.findMany({
-            where: eq(events.clubId, clubId),
+            where: and(
+                eq(events.clubId, clubId),
+                or(isNull(events.status), eq(events.status, "cancelled"))
+            ),
             orderBy: [desc(events.eventStartTime)]
         });
 
@@ -493,7 +498,10 @@ export async function getClubEvents(clubId: number) {
 
         return {
             success: true,
-            clubEvents,
+            clubEvents: clubEvents.map((event) => ({
+                ...event,
+                status: deriveEventStatus(event),
+            })),
             message: "successful"
         }
 
@@ -511,10 +519,7 @@ export async function getUpcomingevents() {
 
         const upcomingEvents = await db.query.events.findMany({
             where: and(
-                or(
-                    eq(events.status, 'upcoming'),
-                    eq(events.status, 'published')
-                ),
+                isNull(events.status),
                 sql`${events.eventStartTime} > ${now} `,
                 eq(events.isRegistrationOpen, true)
             ),
@@ -541,7 +546,10 @@ export async function getUpcomingevents() {
 
         return {
             success: true,
-            upcomingEvents
+            upcomingEvents: upcomingEvents.map((event) => ({
+                ...event,
+                status: deriveEventStatus(event),
+            }))
         }
     } catch (error) {
         return {
@@ -554,6 +562,7 @@ export async function getUpcomingevents() {
 export async function getAllEvents() {
     try {
         const allEvents = await db.query.events.findMany({
+            where: or(isNull(events.status), eq(events.status, "cancelled")),
             with: {
                 club: {
                     columns: {
@@ -577,7 +586,10 @@ export async function getAllEvents() {
 
         return {
             success: true,
-            allEvents
+            allEvents: allEvents.map((event) => ({
+                ...event,
+                status: deriveEventStatus(event),
+            }))
         }
     } catch (error) {
         return {
@@ -750,7 +762,7 @@ export async function cancelEvent(authId: string, eventId: number) {
         if (event.status === 'cancelled') {
             return { success: false, message: "Event is already cancelled" };
         }
-        if (event.status === 'completed') {
+        if (deriveEventStatus(event) === 'completed') {
             return { success: false, message: "Cannot cancel a completed event" };
         }
 
