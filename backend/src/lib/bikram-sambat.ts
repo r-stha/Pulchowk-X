@@ -7,7 +7,10 @@
  * - Even semesters (2, 4, 6, 8, 10): Start on Mangsir 15 BS
  */
 
-import NepaliDate from 'nepali-date-converter';
+import NepaliDateModule from 'nepali-date-converter';
+
+// Handle both ESM default export and CJS module.exports
+const NepaliDate = (NepaliDateModule as any).default || NepaliDateModule;
 
 export interface BSDate {
     year: number;
