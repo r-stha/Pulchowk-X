@@ -12,7 +12,6 @@
     getSubjects,
     getTeacherSubjects,
     submitAssignment,
-    upsertStudentProfile,
     type Assignment,
     type AssignmentSubmission,
     type Faculty,
@@ -57,55 +56,6 @@
     staleTime: 1000 * 30,
     refetchOnWindowFocus: false,
   }));
-
-  let profileForm = $state({
-    facultyId: "",
-    currentSemester: "1",
-    semesterStartDate: new Date().toISOString().slice(0, 10),
-    autoAdvance: true,
-  });
-
-  $effect(() => {
-    const profile = profileQuery.data?.profile;
-    if (!profile) return;
-    profileForm.facultyId = String(profile.facultyId);
-    profileForm.currentSemester = String(profile.currentSemester);
-    profileForm.semesterStartDate = profile.semesterStartDate
-      ? new Date(profile.semesterStartDate).toISOString().slice(0, 10)
-      : new Date().toISOString().slice(0, 10);
-    profileForm.autoAdvance = profile.autoAdvance ?? true;
-  });
-
-  const selectedFaculty = $derived<Faculty | null>(
-    facultiesQuery.data?.faculties?.find(
-      (faculty) => faculty.id === Number(profileForm.facultyId),
-    ) || null,
-  );
-  let profileSaving = $state(false);
-  let profileError = $state<string | null>(null);
-
-  async function saveProfile() {
-    profileError = null;
-    profileSaving = true;
-    try {
-      const result = await upsertStudentProfile({
-        facultyId: Number(profileForm.facultyId),
-        currentSemester: Number(profileForm.currentSemester),
-        semesterStartDate: profileForm.semesterStartDate,
-        autoAdvance: profileForm.autoAdvance,
-      });
-      if (!result.success) {
-        profileError = result.message || "Failed to save profile.";
-      } else {
-        await profileQuery.refetch();
-        await mySubjectsQuery.refetch();
-      }
-    } catch (error: any) {
-      profileError = error.message;
-    } finally {
-      profileSaving = false;
-    }
-  }
 
   function formatDate(dateStr?: string | null) {
     if (!dateStr) return "No due date";
@@ -556,140 +506,67 @@
           </div>
         </div>
       {:else if !isTeacher}
-        <div class="grid gap-6 lg:grid-cols-[minmax(0,1fr),minmax(0,1fr)]">
+        {#if profileQuery.data?.profile}
           <div
             class="rounded-2xl border border-slate-200 bg-white/90 p-6 shadow-sm space-y-4"
           >
-            <div>
-              <h2 class="text-lg font-semibold text-slate-900">
-                Semester setup
-              </h2>
-              <p class="text-sm text-slate-500">
-                Choose your faculty and current semester. We will auto-advance
-                when the term ends.
-              </p>
+            <div class="flex items-start justify-between gap-4">
+              <div>
+                <p
+                  class="text-xs font-semibold uppercase tracking-wide text-slate-400"
+                >
+                  Current term
+                </p>
+                <h3 class="text-lg font-semibold text-slate-900">
+                  {mySubjectsQuery.data?.profile?.faculty?.name || "Faculty"}
+                </h3>
+                <p class="text-sm text-slate-500">
+                  Semester {profileQuery.data.profile.currentSemester} - Ends
+                  {formatDate(profileQuery.data.profile.semesterEndDate)}
+                </p>
+              </div>
+              <div class="text-right">
+                <p class="text-2xl font-semibold text-slate-900">
+                  {semesterProgress}%
+                </p>
+                <p class="text-xs text-slate-400">progress</p>
+              </div>
             </div>
-
-            {#if profileError}
+            <div class="h-2 w-full rounded-full bg-slate-100">
               <div
-                class="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
-              >
-                {profileError}
-              </div>
-            {/if}
-
-            <div class="grid gap-4 sm:grid-cols-2">
-              <label
-                class="space-y-1 text-xs font-semibold uppercase tracking-wide text-slate-500"
-              >
-                Faculty
-                <StyledSelect
-                  bind:value={profileForm.facultyId}
-                  placeholder="Select faculty"
-                  options={(facultiesQuery.data?.faculties || []).map(
-                    (faculty) => ({
-                      value: String(faculty.id),
-                      label: faculty.name,
-                    }),
-                  )}
-                />
-              </label>
-              <label
-                class="space-y-1 text-xs font-semibold uppercase tracking-wide text-slate-500"
-              >
-                Current semester
-                <StyledSelect
-                  bind:value={profileForm.currentSemester}
-                  placeholder="Select semester"
-                  options={Array.from(
-                    { length: selectedFaculty?.semestersCount || 8 },
-                    (_, index) => ({
-                      value: String(index + 1),
-                      label: `Semester ${index + 1}`,
-                    }),
-                  )}
-                />
-              </label>
-              <label
-                class="space-y-1 text-xs font-semibold uppercase tracking-wide text-slate-500"
-              >
-                Semester start date
-                <input
-                  type="date"
-                  class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-100"
-                  bind:value={profileForm.semesterStartDate}
-                />
-              </label>
-              <label
-                class="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500"
-              >
-                <input
-                  type="checkbox"
-                  class="h-4 w-4 rounded border-slate-300 text-blue-600"
-                  bind:checked={profileForm.autoAdvance}
-                />
-                Auto-advance semester
-              </label>
+                class="h-2 rounded-full bg-blue-500 transition-all"
+                style={`width: ${semesterProgress}%`}
+              ></div>
             </div>
-
-            <button
-              class="inline-flex items-center justify-center rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 disabled:opacity-50"
-              onclick={saveProfile}
-              disabled={profileSaving || !profileForm.facultyId}
-            >
-              {profileSaving ? "Saving..." : "Save semester setup"}
-            </button>
+            <p class="text-xs text-slate-500">
+              Semester automatically detected from your roll number. Auto-advance is
+              {profileQuery.data.profile.autoAdvance
+                ? " enabled."
+                : " disabled."}
+            </p>
           </div>
-
-          {#if profileQuery.data?.profile}
-            <div
-              class="rounded-2xl border border-slate-200 bg-white/90 p-6 shadow-sm space-y-4"
-            >
-              <div class="flex items-start justify-between gap-4">
-                <div>
-                  <p
-                    class="text-xs font-semibold uppercase tracking-wide text-slate-400"
-                  >
-                    Current term
-                  </p>
-                  <h3 class="text-lg font-semibold text-slate-900">
-                    {mySubjectsQuery.data?.profile?.faculty?.name || "Faculty"}
-                  </h3>
-                  <p class="text-sm text-slate-500">
-                    Semester {profileQuery.data.profile.currentSemester} - Ends
-                    {formatDate(profileQuery.data.profile.semesterEndDate)}
-                  </p>
-                </div>
-                <div class="text-right">
-                  <p class="text-2xl font-semibold text-slate-900">
-                    {semesterProgress}%
-                  </p>
-                  <p class="text-xs text-slate-400">progress</p>
-                </div>
+        {:else}
+          <div
+            class="rounded-2xl border border-slate-200 bg-white/90 p-6 shadow-sm"
+          >
+            <div class="flex items-start gap-4">
+              <div
+                class="flex h-10 w-10 items-center justify-center rounded-full bg-amber-50 text-amber-600"
+              >
+                <span class="text-sm font-semibold">!</span>
               </div>
-              <div class="h-2 w-full rounded-full bg-slate-100">
-                <div
-                  class="h-2 rounded-full bg-blue-500 transition-all"
-                  style={`width: ${semesterProgress}%`}
-                ></div>
+              <div class="space-y-2">
+                <h2 class="text-lg font-semibold text-slate-900">
+                  Profile not set up
+                </h2>
+                <p class="text-sm text-slate-600">
+                  Your semester profile will be automatically created when you sign in with your Pulchowk Campus email (e.g., 079bct070.name@pcampus.edu.np). 
+                  Please sign out and sign in again with a valid student email.
+                </p>
               </div>
-              <p class="text-xs text-slate-500">
-                Auto-advance is
-                {profileQuery.data.profile.autoAdvance
-                  ? " enabled."
-                  : " disabled."}
-              </p>
             </div>
-          {:else}
-            <div
-              class="rounded-2xl border border-slate-200 bg-white/90 p-6 shadow-sm"
-            >
-              <p class="text-sm text-slate-500">
-                Complete your semester setup to see progress and deadlines.
-              </p>
-            </div>
-          {/if}
-        </div>
+          </div>
+        {/if}
 
         <div class="space-y-6">
           <div class="flex flex-wrap items-center justify-between gap-3">
@@ -865,8 +742,8 @@
               class="rounded-2xl border border-slate-200 bg-white/90 p-6 shadow-sm"
             >
               <p class="text-sm text-slate-500">
-                No subjects are available yet. Confirm your semester setup or
-                check back soon.
+                No subjects are available yet for your semester. Please check
+                back soon.
               </p>
             </div>
           {/if}

@@ -43,10 +43,10 @@ export async function apiFetch<T>(
 
     try {
         const response = await fetch(url, { ...defaultOptions, ...options });
-        
+
         // Clone response for error debugging
         const responseClone = response.clone();
-        
+
         // Try to parse JSON
         let data: any;
         try {

@@ -1,34 +1,13 @@
 /**
  * Bikram Sambat Calendar Utilities for Nepal Academic Year
+ * Uses @sbmdkl/nepali-date-converter for accurate BS-AD conversions
  * 
  * Pulchowk Campus Academic Calendar:
  * - Odd semesters (1, 3, 5, 7, 9): Start on Baisakh 17 BS
  * - Even semesters (2, 4, 6, 8, 10): Start on Mangsir 15 BS
  */
 
-// Nepali months days for each year (2076-2090 BS)
-// Each array has 12 elements representing days in each month
-const BS_CALENDAR_DATA: Record<number, number[]> = {
-    2076: [31, 32, 31, 32, 31, 30, 30, 30, 29, 30, 29, 31],
-    2077: [31, 31, 32, 31, 31, 31, 30, 29, 30, 29, 30, 30],
-    2078: [31, 31, 32, 32, 31, 30, 30, 29, 30, 29, 30, 30],
-    2079: [31, 32, 31, 32, 31, 30, 30, 30, 29, 29, 30, 31],
-    2080: [31, 31, 31, 32, 31, 31, 30, 29, 30, 29, 30, 30],
-    2081: [31, 31, 32, 31, 31, 31, 30, 29, 30, 29, 30, 30],
-    2082: [31, 32, 31, 32, 31, 30, 30, 30, 29, 29, 30, 31],
-    2083: [30, 32, 31, 32, 31, 30, 30, 30, 29, 30, 29, 31],
-    2084: [31, 31, 32, 31, 31, 31, 30, 29, 30, 29, 30, 30],
-    2085: [31, 31, 32, 32, 31, 30, 30, 29, 30, 29, 30, 30],
-    2086: [31, 32, 31, 32, 31, 30, 30, 30, 29, 29, 30, 31],
-    2087: [30, 32, 31, 32, 31, 31, 29, 30, 30, 29, 29, 31],
-    2088: [31, 31, 32, 31, 31, 31, 30, 29, 30, 29, 30, 30],
-    2089: [31, 31, 32, 32, 31, 30, 30, 29, 30, 29, 30, 30],
-    2090: [31, 32, 31, 32, 31, 30, 30, 30, 29, 29, 30, 31],
-};
-
-// Reference point: 2076/01/01 BS = 2019/04/14 AD
-const BS_REFERENCE = { year: 2076, month: 1, day: 1 };
-const AD_REFERENCE = new Date(2019, 3, 14); // Month is 0-indexed
+import { adToBs as pkgAdToBs, bsToAd as pkgBsToAd } from '@sbmdkl/nepali-date-converter';
 
 export interface BSDate {
     year: number;
@@ -40,66 +19,27 @@ export interface BSDate {
  * Convert Bikram Sambat date to Gregorian (AD) date
  */
 export function bsToAd(bsYear: number, bsMonth: number, bsDay: number): Date {
-    let totalDays = 0;
-
-    // Days from reference year to target year
-    for (let year = BS_REFERENCE.year; year < bsYear; year++) {
-        const monthDays = BS_CALENDAR_DATA[year] || BS_CALENDAR_DATA[2080]; // Fallback
-        totalDays += monthDays.reduce((sum, days) => sum + days, 0);
-    }
-
-    // Days in target year up to target month
-    const targetYearMonths = BS_CALENDAR_DATA[bsYear] || BS_CALENDAR_DATA[2080];
-    for (let month = 1; month < bsMonth; month++) {
-        totalDays += targetYearMonths[month - 1];
-    }
-
-    // Add remaining days
-    totalDays += bsDay - 1;
-
-    // Create result date from reference
-    const result = new Date(AD_REFERENCE);
-    result.setDate(result.getDate() + totalDays);
-    return result;
+    // Package expects YYYY-MM-DD format
+    const bsDateStr = `${bsYear}-${String(bsMonth).padStart(2, '0')}-${String(bsDay).padStart(2, '0')}`;
+    const adDateStr = pkgBsToAd(bsDateStr); // Returns "YYYY-MM-DD"
+    
+    const [year, month, day] = adDateStr.split('-').map(Number);
+    return new Date(year, month - 1, day); // Month is 0-indexed in JS Date
 }
 
 /**
  * Convert Gregorian (AD) date to Bikram Sambat date
  */
 export function adToBs(adDate: Date): BSDate {
-    const diffTime = adDate.getTime() - AD_REFERENCE.getTime();
-    let remainingDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-
-    let bsYear = BS_REFERENCE.year;
-    let bsMonth = 1;
-    let bsDay = 1;
-
-    // Find year
-    while (remainingDays > 0) {
-        const yearMonths = BS_CALENDAR_DATA[bsYear] || BS_CALENDAR_DATA[2080];
-        const yearDays = yearMonths.reduce((sum, days) => sum + days, 0);
-
-        if (remainingDays >= yearDays) {
-            remainingDays -= yearDays;
-            bsYear++;
-        } else {
-            break;
-        }
-    }
-
-    // Find month
-    const monthDays = BS_CALENDAR_DATA[bsYear] || BS_CALENDAR_DATA[2080];
-    while (remainingDays > 0 && bsMonth <= 12) {
-        if (remainingDays >= monthDays[bsMonth - 1]) {
-            remainingDays -= monthDays[bsMonth - 1];
-            bsMonth++;
-        } else {
-            break;
-        }
-    }
-
-    bsDay = remainingDays + 1;
-
+    const year = adDate.getFullYear();
+    const month = adDate.getMonth() + 1; // Convert from 0-indexed
+    const day = adDate.getDate();
+    
+    // Package expects YYYY-MM-DD format
+    const adDateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    const bsDateStr = pkgAdToBs(adDateStr); // Returns "YYYY-MM-DD"
+    
+    const [bsYear, bsMonth, bsDay] = bsDateStr.split('-').map(Number);
     return { year: bsYear, month: bsMonth, day: bsDay };
 }
 
@@ -133,7 +73,6 @@ export function calculateCurrentSemester(
     // Convert 2-digit year to 4-digit (e.g., 79 -> 2079)
     const fullBatchYear = batchYearBS < 100 ? 2000 + batchYearBS : batchYearBS;
 
-    const currentBS = adToBs(currentDate);
     let semester = 1;
     let semesterStartDate = getOddSemesterStartDate(fullBatchYear);
     let isGraduated = false;
@@ -174,17 +113,32 @@ export function calculateCurrentSemester(
 }
 
 /**
- * Get semester end date based on start date
+ * Get semester end date based on batch year and semester number
  */
-export function getSemesterEndDate(semesterStartDate: Date, semesterNumber: number): Date {
-    const startBS = adToBs(semesterStartDate);
+export function getSemesterEndDate(batchYearBS: number, semesterNumber: number): Date {
+    // Convert 2-digit year to 4-digit
+    const fullBatchYear = batchYearBS < 100 ? 2000 + batchYearBS : batchYearBS;
+    
     const isOddSemester = semesterNumber % 2 === 1;
+    const semYear = fullBatchYear + Math.floor((semesterNumber - 1) / 2);
 
     if (isOddSemester) {
-        // Odd semester ends on Mangsir 14 of same year
-        return getEvenSemesterStartDate(startBS.year);
+        // Odd semester ends when even semester starts (Mangsir 15 of same year)
+        return getEvenSemesterStartDate(semYear);
     } else {
-        // Even semester ends on Baisakh 16 of next year
-        return getOddSemesterStartDate(startBS.year + 1);
+        // Even semester ends when next odd semester starts (Baisakh 17 of next year)
+        return getOddSemesterStartDate(semYear + 1);
     }
+}
+
+/**
+ * Format a BS date for display
+ */
+export function formatBSDate(bsDate: BSDate): string {
+    const months = [
+        'Baisakh', 'Jestha', 'Ashadh', 'Shrawan',
+        'Bhadra', 'Ashwin', 'Kartik', 'Mangsir',
+        'Poush', 'Magh', 'Falgun', 'Chaitra'
+    ];
+    return `${months[bsDate.month - 1]} ${bsDate.day}, ${bsDate.year}`;
 }

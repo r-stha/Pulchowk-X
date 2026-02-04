@@ -10,7 +10,6 @@ import {
   getSubjects,
   getTeacherSubjects,
   submitAssignment,
-  upsertMyProfile,
   gradeStudentSubmission,
   ExportAssignmentSubmissions,
 } from "../controllers/classroom.controller.js";
@@ -23,7 +22,6 @@ router.get("/faculties", getFaculties);
 router.get("/subjects", getSubjects);
 
 router.get("/me", requireAuth, getMyProfile);
-router.post("/me", requireAuth, upsertMyProfile);
 router.get("/me/subjects", requireAuth, getMySubjects);
 
 router.get("/teacher/subjects", requireAuth, requireTeacher, getTeacherSubjects);

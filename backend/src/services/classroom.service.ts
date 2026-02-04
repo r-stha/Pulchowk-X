@@ -775,7 +775,7 @@ export async function createStudentProfileFromEmail(
 
   // Calculate semester end date
   const semesterEndDate = getSemesterEndDate(
-    semesterInfo.semesterStartDate,
+    parsedEmail.fullBatchYear,
     semesterInfo.semester
   );
 

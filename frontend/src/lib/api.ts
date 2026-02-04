@@ -689,25 +689,6 @@ export async function getStudentProfile(): Promise<{ success: boolean; profile: 
     }
 }
 
-export async function upsertStudentProfile(data: {
-    facultyId: number;
-    currentSemester?: number;
-    semesterStartDate?: string;
-    autoAdvance?: boolean;
-}): Promise<{ success: boolean; profile?: StudentProfile; message?: string }> {
-    try {
-        const res = await fetch(`${API_CLASSROOM}/me`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
-            body: JSON.stringify(data),
-        });
-        return await res.json();
-    } catch (error: any) {
-        return { success: false, message: error.message };
-    }
-}
-
 export async function getMySubjects(): Promise<{
     success: boolean;
     profile?: StudentProfile | null;
