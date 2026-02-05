@@ -1365,3 +1365,214 @@ export async function deleteConversation(
         return { success: false, message: error.message };
     }
 }
+
+// ============ NOTICES API ============
+const API_NOTICES = '/api/notices';
+
+export interface Notice {
+    id: number;
+    title: string;
+    content: string;
+    section: 'results' | 'routines';
+    subsection: 'be' | 'msc';
+    attachmentUrl: string | null;
+    attachmentType: 'pdf' | 'image' | null;
+    attachmentName: string | null;
+    authorId: string;
+    isNew: boolean;
+    publishedAt: string;
+    createdAt: string;
+    updatedAt: string;
+    author?: {
+        id: string;
+        name: string;
+        email?: string;
+    };
+}
+
+export interface NoticeStats {
+    total: number;
+    beResults: number;
+    mscResults: number;
+    beRoutines: number;
+    mscRoutines: number;
+    newCount: number;
+}
+
+export interface NoticeFilters {
+    section?: 'results' | 'routines';
+    subsection?: 'be' | 'msc';
+    search?: string;
+    limit?: number;
+    offset?: number;
+}
+
+export async function getNotices(
+    filters?: NoticeFilters
+): Promise<{ success: boolean; data?: Notice[]; message?: string }> {
+    try {
+        const params = new URLSearchParams();
+        if (filters?.section) params.append('section', filters.section);
+        if (filters?.subsection) params.append('subsection', filters.subsection);
+        if (filters?.search) params.append('search', filters.search);
+        if (filters?.limit) params.append('limit', filters.limit.toString());
+        if (filters?.offset) params.append('offset', filters.offset.toString());
+
+        const queryString = params.toString();
+        const url = queryString ? `${API_NOTICES}?${queryString}` : API_NOTICES;
+
+        const res = await fetch(url, {
+            credentials: 'include'
+        });
+        const json = await res.json();
+
+        // Preferred shape: { success, data }
+        if (typeof json?.success === 'boolean') return json;
+
+        // Legacy/alternate shape: { data: { success, notices, message } }
+        if (typeof json?.data?.success === 'boolean') {
+            return {
+                success: json.data.success,
+                data: json.data.notices,
+                message: json.data.message,
+            };
+        }
+
+        return { success: false, message: 'Invalid server response' };
+    } catch (error: any) {
+        return { success: false, message: error.message };
+    }
+}
+
+export async function getNoticeStats(): Promise<{ success: boolean; data?: NoticeStats; message?: string }> {
+    try {
+        const res = await fetch(`${API_NOTICES}/stats`, {
+            credentials: 'include'
+        });
+        const json = await res.json();
+
+        // Preferred shape: { success, data }
+        if (typeof json?.success === 'boolean') return json;
+
+        // Legacy/alternate shape: { data: { success, stats, message } }
+        if (typeof json?.data?.success === 'boolean') {
+            return {
+                success: json.data.success,
+                data: json.data.stats,
+                message: json.data.message,
+            };
+        }
+
+        return { success: false, message: 'Invalid server response' };
+    } catch (error: any) {
+        return { success: false, message: error.message };
+    }
+}
+
+export async function createNotice(
+    data: Omit<Notice, 'id' | 'authorId' | 'createdAt' | 'updatedAt' | 'author'>
+): Promise<{ success: boolean; data?: Notice; message?: string }> {
+    try {
+        const res = await fetch(API_NOTICES, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify(data),
+        });
+        const json = await res.json();
+
+        if (typeof json?.success === 'boolean') return json;
+
+        if (typeof json?.data?.success === 'boolean') {
+            return {
+                success: json.data.success,
+                data: json.data.notice,
+                message: json.data.message,
+            };
+        }
+
+        return { success: false, message: 'Invalid server response' };
+    } catch (error: any) {
+        return { success: false, message: error.message };
+    }
+}
+
+export async function updateNotice(
+    id: number,
+    data: Partial<Omit<Notice, 'id' | 'authorId' | 'createdAt' | 'updatedAt' | 'author'>>
+): Promise<{ success: boolean; data?: Notice; message?: string }> {
+    try {
+        const res = await fetch(`${API_NOTICES}/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify(data),
+        });
+        const json = await res.json();
+
+        if (typeof json?.success === 'boolean') return json;
+
+        if (typeof json?.data?.success === 'boolean') {
+            return {
+                success: json.data.success,
+                data: json.data.notice,
+                message: json.data.message,
+            };
+        }
+
+        return { success: false, message: 'Invalid server response' };
+    } catch (error: any) {
+        return { success: false, message: error.message };
+    }
+}
+
+export async function deleteNotice(
+    id: number
+): Promise<{ success: boolean; message?: string }> {
+    try {
+        const res = await fetch(`${API_NOTICES}/${id}`, {
+            method: 'DELETE',
+            credentials: 'include',
+        });
+        const json = await res.json();
+
+        if (typeof json?.success === 'boolean') return json;
+
+        if (typeof json?.data?.success === 'boolean') {
+            return {
+                success: json.data.success,
+                message: json.data.message,
+            };
+        }
+
+        return { success: false, message: 'Invalid server response' };
+    } catch (error: any) {
+        return { success: false, message: error.message };
+    }
+}
+
+export async function markNoticeAsRead(
+    id: number
+): Promise<{ success: boolean; message?: string }> {
+    try {
+        const res = await fetch(`${API_NOTICES}/${id}/read`, {
+            method: 'PATCH',
+            credentials: 'include',
+        });
+        const json = await res.json();
+
+        if (typeof json?.success === 'boolean') return json;
+
+        if (typeof json?.data?.success === 'boolean') {
+            return {
+                success: json.data.success,
+                message: json.data.message,
+            };
+        }
+
+        return { success: false, message: 'Invalid server response' };
+    } catch (error: any) {
+        return { success: false, message: error.message };
+    }
+}
+

@@ -30,6 +30,7 @@
   import SellBook from "./pages/SellBook.svelte";
   import MyBooks from "./pages/MyBooks.svelte";
   import Messages from "./pages/Messages.svelte";
+  import Notices from "./pages/Notices.svelte";
   import { onMount, type Component } from "svelte";
 
   let MapComponent: Component | any = $state(null);
@@ -136,6 +137,10 @@
       path: /^\/messages\/?$/,
       component: Messages,
     },
+    {
+      path: /^\/notices\/?$/,
+      component: Notices,
+    },
   ];
 </script>
 
@@ -187,6 +192,12 @@
               href="/map"
               class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-all"
               >Map</a
+            >
+            <a
+              use:route
+              href="/notices"
+              class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-all"
+              >Notices</a
             >
             {#if $session.isPending}
               <div
