@@ -294,8 +294,8 @@ export async function uploadNoticeAttachment(
         ? 'pdf'
         : null
 
-    // Use 'auto' for all files - Cloudinary will auto-detect and handle appropriately
-    const cloudinaryResourceType = 'auto'
+    // Use 'raw' for PDFs (correct for non-image files), 'image' for images
+    const cloudinaryResourceType = isPdf ? 'raw' : 'image'
 
     const uploadResult = await uploadAssignmentFileToCloudinary(
       dataUri,
