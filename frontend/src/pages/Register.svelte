@@ -1,29 +1,29 @@
 <script lang="ts">
-  import { goto, query, replace } from "@mateothegreat/svelte5-router";
-  import Google from "../icons/google.svelte";
-  import { authClient } from "../lib/auth-client";
-  import ErrorToast from "../components/ErrorToast.svelte";
-  let signingIn = $state(false);
-  let error = $state<string | null>(null);
+  import { goto, query, replace } from '@mateothegreat/svelte5-router'
+  import Google from '../icons/google.svelte'
+  import { authClient } from '../lib/auth-client'
+  import ErrorToast from '../components/ErrorToast.svelte'
+  let signingIn = $state(false)
+  let error = $state<string | null>(null)
 
-  const toastError = query("message");
-  let showError = $state(toastError === "login_required");
+  const toastError = query('message')
+  let showError = $state(toastError === 'login_required')
 
   // svelte-ignore state_referenced_locally
-  if (showError) goto("/register");
+  if (showError) goto('/register')
 
   const handleGoogleSignIn = async () => {
-    signingIn = true;
+    signingIn = true
     try {
       await authClient.signIn.social({
-        provider: "google",
+        provider: 'google',
         callbackURL: `${window.origin}/dashboard`,
-      });
+      })
     } catch (err: any) {
-      error = err.message;
-      signingIn = false;
+      error = err.message
+      signingIn = false
     }
-  };
+  }
 </script>
 
 <ErrorToast bind:show={showError} title="Login Required">
@@ -76,7 +76,7 @@
           <Google />
         </div>
         <span>
-          {signingIn ? "Connecting..." : "Continue with Google"}
+          {signingIn ? 'Connecting...' : 'Continue with Google'}
         </span>
       </button>
 
@@ -104,7 +104,7 @@
 
     <div class="mt-8 pt-6 border-t border-gray-200/60">
       <p class="text-xs text-gray-500 text-center leading-relaxed">
-        By continuing, you agree to PulchowkX's
+        By continuing, you agree to Smart Pulchowk's
         <a
           href="#terms"
           class="text-blue-600 hover:text-blue-700 font-medium hover:underline"

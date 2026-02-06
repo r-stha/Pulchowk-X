@@ -159,7 +159,7 @@
             </div>
             <span
               class="text-xl font-bold text-gray-900 tracking-tight group-hover:text-blue-600 transition-colors"
-              >PulchowkX</span
+              >Smart Pulchowk</span
             >
           </a>
           <div class="flex items-center gap-1 sm:gap-2">
@@ -273,7 +273,7 @@
         class="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4"
       >
         <p class="text-gray-500 text-sm">
-          Copyright 2026 PulchowkX. Built for IOE Pulchowk Campus.
+          Copyright 2026 Smart Pulchowk. Built for IOE Pulchowk Campus.
         </p>
         <div class="flex items-center gap-6">
           <!-- svelte-ignore a11y_invalid_attribute -->
