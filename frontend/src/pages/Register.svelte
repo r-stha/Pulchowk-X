@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { goto, query, replace } from '@mateothegreat/svelte5-router'
+  import { query, replace } from '@mateothegreat/svelte5-router'
   import Google from '../icons/google.svelte'
   import { authClient } from '../lib/auth-client'
   import ErrorToast from '../components/ErrorToast.svelte'
@@ -7,10 +7,16 @@
   let error = $state<string | null>(null)
 
   const toastError = query('message')
-  let showError = $state(toastError === 'login_required')
+  let showError = $state(false)
+  let handledLoginRequired = $state(false)
 
-  // svelte-ignore state_referenced_locally
-  if (showError) goto('/register')
+  $effect(() => {
+    if (!handledLoginRequired && toastError === 'login_required') {
+      showError = true
+      handledLoginRequired = true
+      replace('/register')
+    }
+  })
 
   const handleGoogleSignIn = async () => {
     signingIn = true
