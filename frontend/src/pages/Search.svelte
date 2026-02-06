@@ -4,6 +4,7 @@
   import { fade, fly } from 'svelte/transition'
   import { onMount } from 'svelte'
   import { searchEverything } from '../lib/api'
+  import { getLocationIconUrlFor } from '../lib/location-icons'
   import LoadingSpinner from '../components/LoadingSpinner.svelte'
 
   let queryTerm = $state(routeQuery('q') || '')
@@ -47,6 +48,7 @@
     })
     return `/map?${params.toString()}`
   }
+
 </script>
 
 <div class="min-h-[calc(100vh-4rem)] bg-linear-to-b from-cyan-50 via-white to-blue-50 px-4 py-8 sm:px-6 lg:px-8">
@@ -155,16 +157,25 @@
             {:else}
               {#each data.events as event}
                 <a use:route href={`/clubs/${event.clubId}/events/${event.id}`} class="group flex items-start gap-3 rounded-lg px-3 py-2 hover:bg-blue-50 transition">
-                  <div class="w-9 h-9 mt-0.5 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center shrink-0">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M4 9a2 2 0 012-2h12a2 2 0 012 2v2a2 2 0 010 4v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2a2 2 0 010-4V9z"
+                  <div class="w-16 h-12 mt-0.5 rounded-xl border border-blue-100 bg-blue-50 overflow-hidden flex items-center justify-center shrink-0">
+                    {#if event.bannerUrl}
+                      <img
+                        src={event.bannerUrl}
+                        alt={`${event.title} banner`}
+                        class="w-full h-full object-cover"
+                        loading="lazy"
                       />
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v8" />
-                    </svg>
+                    {:else}
+                      <svg class="w-4 h-4 text-blue-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M4 9a2 2 0 012-2h12a2 2 0 012 2v2a2 2 0 010 4v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2a2 2 0 010-4V9z"
+                        />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v8" />
+                      </svg>
+                    {/if}
                   </div>
                   <div class="min-w-0 flex-1">
                     <p class="font-semibold text-slate-800 flex items-center justify-between gap-2">
@@ -293,15 +304,13 @@
             {:else}
               {#each data.places as place}
                 <a use:route href={getMapLocationHref(place)} class="group flex items-start gap-3 rounded-lg px-3 py-2 hover:bg-indigo-50 transition">
-                  <div class="w-9 h-9 mt-0.5 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center shrink-0">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M5 3v18M5 4h10l-1.5 3L15 10H5"
-                      />
-                    </svg>
+                  <div class="w-9 h-9 mt-0.5 rounded-xl bg-indigo-100 flex items-center justify-center shrink-0 overflow-hidden">
+                    <img
+                      src={getLocationIconUrlFor(place)}
+                      alt={`${place.name} icon`}
+                      class="w-5 h-5 object-contain"
+                      loading="lazy"
+                    />
                   </div>
                   <div class="min-w-0 flex-1">
                     <p class="font-semibold text-slate-800 flex items-center justify-between gap-2">

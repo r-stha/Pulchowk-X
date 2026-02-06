@@ -4,15 +4,34 @@
 @source "../node_modules/flowbite-svelte";
 
 @layer base {
+  :root {
+    --font-body: "Manrope", sans-serif;
+    --font-display: "Space Grotesk", "Manrope", sans-serif;
+  }
+
   body {
-    font-family: "Manrope", sans-serif;
+    font-family: var(--font-body);
     @apply text-gray-900 antialiased;
     background: radial-gradient(circle at top left, #ecfeff 0%, #f8fafc 35%, #eef2ff 100%);
   }
 
   h1,
   h2,
-  h3 {
-    font-family: "Space Grotesk", "Manrope", sans-serif;
+  h3,
+  h4,
+  h5,
+  h6,
+  button,
+  [role="button"],
+  nav a,
+  .font-display {
+    font-family: var(--font-display);
+    letter-spacing: -0.01em;
+  }
+
+  input,
+  textarea,
+  select {
+    font-family: var(--font-body);
   }
 }

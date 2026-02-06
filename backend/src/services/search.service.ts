@@ -12,6 +12,45 @@ interface SearchInput {
   userId?: string;
 }
 
+function getLocationIcon(description: string) {
+  const desc = (description ?? "").toLowerCase();
+
+  if (desc.includes("bank") || desc.includes("atm")) return "bank-icon";
+  if (desc.includes("mess") || desc.includes("canteen") || desc.includes("food")) return "food-icon";
+  if (desc.includes("library")) return "library-icon";
+  if (desc.includes("department")) return "dept-icon";
+  if (desc.includes("mandir")) return "temple-icon";
+  if (desc.includes("gym") || desc.includes("sport")) return "gym-icon";
+  if (desc.includes("football")) return "football-icon";
+  if (desc.includes("cricket")) return "cricket-icon";
+  if (desc.includes("basketball") || desc.includes("volleyball")) return "volleyball-icon";
+  if (desc.includes("hostel")) return "hostel-icon";
+  if (desc.includes("lab")) return "lab-icon";
+  if (desc.includes("helicopter")) return "helipad-icon";
+  if (desc.includes("parking")) return "parking-icon";
+  if (desc.includes("electrical club")) return "electrical-icon";
+  if (desc.includes("music club")) return "music-icon";
+  if (desc.includes("center for energy studies")) return "energy-icon";
+  if (desc.includes("the helm of ioe pulchowk")) return "helm-icon";
+  if (desc.includes("pi chautari") || desc.includes("park") || desc.includes("garden")) return "garden-icon";
+  if (desc.includes("store") || desc.includes("bookshop")) return "store-icon";
+  if (desc.includes("quarter")) return "quarter-icon";
+  if (desc.includes("robotics club")) return "robotics-icon";
+  if (desc.includes("clinic") || desc.includes("health")) return "clinic-icon";
+  if (desc.includes("badminton")) return "badminton-icon";
+  if (desc.includes("entrance")) return "entrance-icon";
+  if (desc.includes("office") || desc.includes("ntbns") || desc.includes("seds") || desc.includes("cids")) return "office-icon";
+  if (desc.includes("building")) return "building-icon";
+  if (desc.includes("block") || desc.includes("embark")) return "block-icon";
+  if (desc.includes("cave")) return "cave-icon";
+  if (desc.includes("fountain")) return "fountain-icon";
+  if (desc.includes("water vending machine") || desc.includes("water")) return "water-vending-machine-icon";
+  if (desc.includes("workshop")) return "workshop-icon";
+  if (desc.includes("toilet") || desc.includes("washroom")) return "toilet-icon";
+  if (desc.includes("bridge")) return "bridge-icon";
+  return "custom-marker";
+}
+
 export async function globalSearch(input: SearchInput) {
   const query = input.query?.trim();
   const limit = Math.max(1, Math.min(25, input.limit ?? 6));
@@ -64,6 +103,7 @@ export async function globalSearch(input: SearchInput) {
         eventEndTime: true,
         venue: true,
         clubId: true,
+        bannerUrl: true,
       },
       with: {
         club: {
@@ -158,13 +198,26 @@ export async function globalSearch(input: SearchInput) {
       return text.includes(normalizedTerm);
     })
     .slice(0, limit)
-    .map((building: any) => ({
-      id: building.id,
-      name: building.name,
-      description: building.description,
-      coordinates: building.coordinates,
-      services: (building.services ?? []).slice(0, 3),
-    }));
+    .map((building: any) => {
+      const services = (building.services ?? []).slice(0, 3);
+      const iconText = [
+        building.name,
+        building.description,
+        ...services.map((service: any) => service?.name),
+        ...services.map((service: any) => service?.purpose),
+      ]
+        .filter(Boolean)
+        .join(" ");
+
+      return {
+        id: building.id,
+        name: building.name,
+        description: building.description,
+        coordinates: building.coordinates,
+        icon: getLocationIcon(iconText),
+        services,
+      };
+    });
 
   return {
     success: true,

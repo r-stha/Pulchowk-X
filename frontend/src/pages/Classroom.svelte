@@ -22,9 +22,10 @@
   const sessionUser = $derived(
     $session.data?.user as { role?: string } | undefined,
   );
-  const isTeacher = $derived(sessionUser?.role === "teacher");
-  const isAdmin = $derived(sessionUser?.role === "admin");
-  const isStudent = $derived(!isTeacher && !isAdmin);
+  const userRole = $derived(sessionUser?.role || "");
+  const isTeacher = $derived(userRole === "teacher");
+  const isAdmin = $derived(userRole === "admin");
+  const isStudent = $derived(userRole === "student");
 
   const facultiesQuery = createQuery(() => ({
     queryKey: ["classroom-faculties"],
@@ -44,7 +45,7 @@
   const mySubjectsQuery = createQuery(() => ({
     queryKey: ["classroom-subjects", $session.data?.user?.id],
     queryFn: getMySubjects,
-    enabled: !!$session.data?.user?.id && isStudent,
+    enabled: !!$session.data?.user?.id && isStudent && !!profileQuery.data?.profile,
     staleTime: 1000 * 30,
     refetchOnWindowFocus: false,
   }));
@@ -416,7 +417,9 @@
             ? "Teacher Access"
             : isAdmin
               ? "Administrator"
-              : "Student Portal"}
+              : isStudent
+                ? "Student Portal"
+                : "Classroom Access"}
         </div>
         <h1
           class="text-4xl sm:text-5xl lg:text-6xl font-black text-slate-900 mb-6 tracking-tight"
@@ -431,11 +434,13 @@
             ? "Manage your curriculum, track student progress, and organize assignments effortlessly."
             : isAdmin
               ? "System overview and administrative controls."
-              : "Stay on top of your coursework. Track assignments, deadlines, and submissions in one hub."}
+              : isStudent
+                ? "Stay on top of your coursework. Track assignments, deadlines, and submissions in one hub."
+                : "Classroom features are available for student and teacher accounts."}
         </p>
       </div>
 
-      {#if !isAdmin}
+      {#if isTeacher || isStudent}
         <!-- Stats Grid -->
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-12">
           {#if isTeacher}
@@ -707,10 +712,45 @@
             submit work.
           </p>
         </div>
-      {:else if !isTeacher}
+      {:else if isStudent}
         <!-- Student Interface -->
         <div class="mt-8">
-          {#if !profileQuery.data?.profile}
+          {#if profileQuery.isLoading || profileQuery.isFetching}
+            <div
+              class="rounded-3xl border border-blue-200 bg-blue-50/50 p-8 flex gap-4 shadow-sm"
+            >
+              <div
+                class="shrink-0 w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center"
+              >
+                <div
+                  class="w-4 h-4 border-2 border-blue-300 border-t-blue-700 rounded-full animate-spin"
+                ></div>
+              </div>
+              <div>
+                <h3 class="font-semibold text-blue-900">Preparing your profile</h3>
+                <p class="text-sm text-blue-700 mt-1">
+                  Verifying your classroom setup...
+                </p>
+              </div>
+            </div>
+          {:else if profileQuery.isError}
+            <div
+              class="rounded-3xl border border-rose-200 bg-rose-50/60 p-8 flex gap-4 shadow-sm"
+            >
+              <div
+                class="shrink-0 w-8 h-8 rounded-full bg-rose-100 flex items-center justify-center text-rose-600 font-bold"
+              >
+                !
+              </div>
+              <div>
+                <h3 class="font-semibold text-rose-900">Profile load failed</h3>
+                <p class="text-sm text-rose-700 mt-1">
+                  {(profileQuery.error as Error)?.message ||
+                    "Unable to load your classroom profile right now."}
+                </p>
+              </div>
+            </div>
+          {:else if !profileQuery.data?.profile}
             <div
               class="rounded-3xl border border-amber-200 bg-amber-50/50 p-8 flex gap-4 shadow-sm"
             >
@@ -1075,7 +1115,7 @@
             {/if}
           {/if}
         </div>
-      {:else}
+      {:else if isTeacher}
         <!-- Teacher View (Refined) -->
         <!-- Teacher Actions and List -->
         <div class="space-y-8 mt-8">
@@ -1435,6 +1475,20 @@
               </div>
             {/if}
           </div>
+        </div>
+      {:else}
+        <div
+          class="rounded-xl border border-slate-200 bg-white p-8 shadow-sm text-center max-w-2xl mx-auto mt-12"
+        >
+          <div
+            class="inline-flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-slate-600 mb-4"
+          >
+            <span class="text-xl font-bold">i</span>
+          </div>
+          <h2 class="text-lg font-semibold text-slate-900 mb-2">Role Pending</h2>
+          <p class="text-slate-600">
+            Your classroom role is still being resolved. Please refresh in a moment.
+          </p>
         </div>
       {/if}
     {/if}

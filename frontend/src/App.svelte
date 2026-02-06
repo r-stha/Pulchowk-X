@@ -6,93 +6,178 @@
     query,
     goto,
     route,
-  } from '@mateothegreat/svelte5-router'
-  import { QueryClientProvider } from '@tanstack/svelte-query'
-  import { queryClient } from './lib/query-client'
-  import { authClient } from './lib/auth-client'
-  import LoadingSpinner from './components/LoadingSpinner.svelte'
-  import ErrorToast from './components/ErrorToast.svelte'
-  import Home from './pages/Home.svelte'
-  import Register from './pages/Register.svelte'
-  import Dashboard from './pages/Dashboard.svelte'
-  import Classroom from './pages/Classroom.svelte'
-  import Clubs from './pages/Clubs.svelte'
-  import ClubDetails from './pages/ClubDetails.svelte'
-  import ClubEvents from './pages/ClubEvents.svelte'
-  import AllEvents from './pages/AllEvents.svelte'
-  import EventDetails from './pages/EventDetails.svelte'
-  import EventCategoryDetails from './pages/EventCategoryDetails.svelte'
-  import CreateEvent from './pages/CreateEvent.svelte'
-  import CreateClub from './pages/CreateClub.svelte'
-  import MapPlaceholder from './pages/MapPlaceholder.svelte'
-  import BookMarketplace from './pages/BookMarketplace.svelte'
-  import BookDetails from './pages/BookDetails.svelte'
-  import SellBook from './pages/SellBook.svelte'
-  import MyBooks from './pages/MyBooks.svelte'
-  import Messages from './pages/Messages.svelte'
-  import Notices from './pages/Notices.svelte'
-  import Search from './pages/Search.svelte'
-  import Admin from './pages/Admin.svelte'
-  import GlobalSearch from './components/GlobalSearch.svelte'
-  import { onMount, type Component } from 'svelte'
+  } from "@mateothegreat/svelte5-router";
+  import { QueryClientProvider } from "@tanstack/svelte-query";
+  import { queryClient } from "./lib/query-client";
+  import { authClient } from "./lib/auth-client";
+  import ErrorToast from "./components/ErrorToast.svelte";
+  import Home from "./pages/Home.svelte";
+  import Register from "./pages/Register.svelte";
+  import Dashboard from "./pages/Dashboard.svelte";
+  import Classroom from "./pages/Classroom.svelte";
+  import Clubs from "./pages/Clubs.svelte";
+  import ClubDetails from "./pages/ClubDetails.svelte";
+  import ClubEvents from "./pages/ClubEvents.svelte";
+  import AllEvents from "./pages/AllEvents.svelte";
+  import EventDetails from "./pages/EventDetails.svelte";
+  import EventCategoryDetails from "./pages/EventCategoryDetails.svelte";
+  import CreateEvent from "./pages/CreateEvent.svelte";
+  import CreateClub from "./pages/CreateClub.svelte";
+  import MapPlaceholder from "./pages/MapPlaceholder.svelte";
+  import BookMarketplace from "./pages/BookMarketplace.svelte";
+  import BookDetails from "./pages/BookDetails.svelte";
+  import SellBook from "./pages/SellBook.svelte";
+  import MyBooks from "./pages/MyBooks.svelte";
+  import Messages from "./pages/Messages.svelte";
+  import Notices from "./pages/Notices.svelte";
+  import Search from "./pages/Search.svelte";
+  import Admin from "./pages/Admin.svelte";
+  import GlobalSearch from "./components/GlobalSearch.svelte";
+  import { onMount, type Component } from "svelte";
 
-  let MapComponent: Component | any = $state(null)
+  let MapComponent: Component | any = $state(null);
 
   onMount(() => {
     const loadMap = () => {
-      import('./pages/Map.svelte').then((module) => {
-        MapComponent = module.default
-      })
-    }
+      import("./pages/Map.svelte").then((module) => {
+        MapComponent = module.default;
+      });
+    };
 
-    if (document.readyState === 'complete') loadMap()
+    if (document.readyState === "complete") loadMap();
     else
-      window.addEventListener('load', loadMap, {
+      window.addEventListener("load", loadMap, {
         once: true,
-      })
-  })
+      });
+  });
 
-  let instance: RouterInstance = $state()!
+  let instance: RouterInstance = $state()!;
 
-  const isMapRoute = $derived(instance?.current?.route?.path === '/map')
-
-  const session = authClient.useSession()
-  const currentRole = $derived(($session.data?.user as any)?.role as
-    | string
-    | undefined)
-
-  const error = query('message')
-  let showError = $state(error === 'unauthorized_domain')
-
-  if (error === 'unauthorized_domain') {
-    goto('/')
+  function normalizePath(path: string) {
+    const clean = path.split("?")[0].split("#")[0];
+    if (clean.length > 1 && clean.endsWith("/")) return clean.slice(0, -1);
+    return clean;
   }
 
-  const embed = query('embed')
-  const isEmbedded = $derived(embed === 'true')
+  function tryNormalizePath(path?: string | null) {
+    if (!path) return null;
+    return normalizePath(path);
+  }
+
+  let activePath = $state("/");
+
+  function syncActivePathFromWindow() {
+    if (typeof window === "undefined") return;
+    activePath = normalizePath(window.location.pathname);
+  }
+
+  onMount(() => {
+    syncActivePathFromWindow();
+    window.addEventListener("pushState", syncActivePathFromWindow);
+    window.addEventListener("replaceState", syncActivePathFromWindow);
+    window.addEventListener("popstate", syncActivePathFromWindow);
+
+    return () => {
+      window.removeEventListener("pushState", syncActivePathFromWindow);
+      window.removeEventListener("replaceState", syncActivePathFromWindow);
+      window.removeEventListener("popstate", syncActivePathFromWindow);
+    };
+  });
+
+  $effect(() => {
+    const routerPath = tryNormalizePath(
+      instance?.current?.result?.path?.original,
+    );
+    if (routerPath && routerPath !== activePath) {
+      activePath = routerPath;
+    }
+  });
+
+  const currentPath = $derived(activePath);
+
+  const isMapRoute = $derived(currentPath === "/map");
+
+  const session = authClient.useSession();
+  let navUserCache = $state<any | null>(null);
+  let navAuthResolved = $state(false);
+
+  $effect(() => {
+    const liveUser = ($session.data?.user as any) ?? null;
+
+    if (!$session.isPending) {
+      navAuthResolved = true;
+    }
+
+    if (liveUser) {
+      navUserCache = liveUser;
+      return;
+    }
+
+    // Clear cache only after initial auth has resolved and session settles as signed-out.
+    if (navAuthResolved && !$session.isPending) {
+      navUserCache = null;
+    }
+  });
+
+  const navUser = $derived(($session.data?.user as any) ?? navUserCache);
+  const showNavSessionLoader = $derived(!navAuthResolved && $session.isPending);
+  const currentRole = $derived((navUser as any)?.role as string | undefined);
+
+  const error = query("message");
+  let showError = $state(error === "unauthorized_domain");
+
+  if (error === "unauthorized_domain") goto("/");
+
+  const embed = query("embed");
+  const isEmbedded = $derived(embed === "true");
+
+  const navPillBase =
+    "inline-flex h-10 items-center gap-1.5 rounded-xl px-3.5 text-sm font-semibold transition-colors whitespace-nowrap";
+  const navPillDefault =
+    "border border-slate-200 bg-white text-slate-700 hover:border-cyan-200 hover:bg-cyan-50 hover:text-cyan-700";
+  const navPillActive = "border border-cyan-200 bg-cyan-50 text-cyan-700";
+
+  const utilityPillBase =
+    "inline-flex h-10 items-center gap-2 rounded-xl px-4 text-xs sm:text-sm font-semibold transition-colors";
+  const utilityPillDefault = "border border-slate-200 bg-white text-slate-700";
+
+  function isRouteActive(href: string, exact = false) {
+    const current = normalizePath(currentPath || "/");
+    const target = normalizePath(href || "/");
+    if (exact) return current === target;
+    return current === target || current.startsWith(`${target}/`);
+  }
+
+  function navPillClass(href: string, exact = false) {
+    return `${navPillBase} ${isRouteActive(href, exact) ? navPillActive : navPillDefault}`;
+  }
+
+  function utilityPillClass(href: string) {
+    return `${utilityPillBase} ${isRouteActive(href) ? navPillActive : utilityPillDefault}`;
+  }
 
   const routes: RouteConfig[] = [
     {
       component: Home,
     },
     {
-      path: 'register',
+      path: "register",
       component: Register,
     },
     {
-      path: 'dashboard',
+      path: "dashboard",
       component: Dashboard,
     },
     {
-      path: 'classroom',
+      path: "classroom",
       component: Classroom,
     },
     {
-      path: 'create-club',
+      path: "create-club",
       component: CreateClub,
     },
     {
-      path: 'map',
+      path: "map",
       component: MapPlaceholder,
     },
     {
@@ -155,170 +240,235 @@
       path: /^\/admin\/?$/,
       component: Admin,
     },
-  ]
+  ];
 </script>
 
 <QueryClientProvider client={queryClient}>
-  {#if !isEmbedded}
-    <nav
-      class="bg-white/85 border-b border-slate-200 sticky top-0 z-50 backdrop-blur-xl"
-    >
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 space-y-3">
-        <div class="flex items-center justify-between gap-3">
-          <a href="/" class="flex items-center gap-2">
-            <img src="/logo.png" alt="Logo" class="size-8 rounded-lg shadow-sm" />
-            <span
-              class="text-xl mt-0.5 font-black text-slate-900 tracking-tight"
-              >Smart Pulchowk</span
-            >
-          </a>
-          <div class="flex items-center gap-2">
-            {#if $session.isPending}
-              <div class="px-3 py-2">
-                <div
-                  class="w-4 h-4 border-2 border-slate-300 border-t-slate-700 rounded-full animate-spin"
-                ></div>
-              </div>
-            {:else if $session.data?.user}
-              <a
-                use:route
-                href="/dashboard"
-                class="px-3 py-2 text-xs sm:text-sm font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-all"
-                >Dashboard</a
-              >
-              <a
-                use:route
-                href="/classroom"
-                class="px-3 py-2 text-xs sm:text-sm font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-all"
-                >Classroom</a
-              >
-              {#if currentRole === 'admin'}
-                <a
-                  use:route
-                  href="/admin"
-                  class="px-3 py-2 text-xs sm:text-sm font-semibold text-white bg-slate-900 hover:bg-slate-800 rounded-lg transition-all"
-                  >Admin</a
-                >
-              {/if}
-            {:else}
-              <a
-                href="/register"
-                class="px-4 py-2 text-sm font-semibold text-white bg-cyan-600 hover:bg-cyan-700 rounded-lg shadow-sm transition-all active:scale-95"
-                >Sign In</a
-              >
-            {/if}
-          </div>
-        </div>
-
-        <div class="flex flex-col xl:flex-row xl:items-center gap-3">
-          <div class="flex-1">
-            <GlobalSearch />
-          </div>
-          <div class="flex flex-wrap items-center gap-1">
-            <a
-              use:route
-              href="/"
-              class="px-3 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-all"
-              >Home</a
-            >
-            <a
-              use:route
-              href="/clubs"
-              class="px-3 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-all"
-              >Clubs</a
-            >
-            <a
-              use:route
-              href="/events"
-              class="px-3 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-all"
-              >Events</a
-            >
-            <a
-              use:route
-              href="/books"
-              class="px-3 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-all"
-              >Books</a
-            >
-            <a
-              use:route
-              href="/map"
-              class="px-3 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-all"
-              >Map</a
-            >
-            <a
-              use:route
-              href="/notices"
-              class="px-3 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-all"
-              >Notices</a
-            >
-          </div>
-        </div>
-      </div>
-    </nav>
-  {/if}
-
-  <!-- Error Toast -->
-  <ErrorToast bind:show={showError} title="Access Denied">
-    Please use your <span class="font-medium text-gray-900"
-      >@pcampus.edu.np</span
-    >
-    email address to sign in.
-  </ErrorToast>
-
-  <main
-    class="{isEmbedded
-      ? 'h-screen'
-      : 'min-h-[calc(100vh-4rem)]'} bg-gray-50 relative"
+  <div
+    class="bg-[radial-gradient(circle_at_12%_0%,#dff9ff_0%,#f8fafc_40%,#eef2ff_100%)]"
   >
-    {#if MapComponent}
-      <div
-        class="absolute inset-0 z-0 transition-opacity duration-300 {isMapRoute
-          ? 'opacity-100 visible'
-          : 'opacity-0 invisible pointer-events-none'}"
-      >
-        <MapComponent />
-      </div>
-    {/if}
-    {#if instance?.navigating}
-      <div
-        class="fixed inset-0 z-40 bg-white/80 backdrop-blur-sm flex items-center justify-center"
-      >
-        <LoadingSpinner size="lg" text="Loading..." />
-      </div>
-    {/if}
-    <div class={isMapRoute ? 'hidden' : 'contents'}>
-      <Router bind:instance {routes} />
-    </div>
-  </main>
+    {#if !isEmbedded}
+      <header class="border-b border-cyan-100/70 bg-transparent">
+        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+          <div class="rounded-2xl bg-transparent p-3 sm:p-4">
+            <div class="flex flex-wrap items-center justify-between gap-3">
+              <a use:route href="/" class="flex items-center gap-3 min-w-0">
+                <img
+                  src="/logo.png"
+                  alt="Logo"
+                  class="size-9 rounded-xl shadow-sm shadow-cyan-100/70 shrink-0"
+                />
+                <div class="min-w-0">
+                  <p
+                    class="text-[11px] font-bold uppercase tracking-[0.22em] text-cyan-600"
+                  >
+                    Pulchowk Digital
+                  </p>
+                  <p
+                    class="text-lg sm:text-xl font-black text-slate-900 tracking-tight truncate"
+                  >
+                    Smart Pulchowk
+                  </p>
+                </div>
+              </a>
 
-  {#if instance?.current?.route?.path !== '/map'}
-    <footer class="bg-white border-t border-gray-200 py-8 mt-auto">
-      <div
-        class="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4"
+              <div class="flex flex-wrap items-center gap-2 justify-end">
+                {#if showNavSessionLoader}
+                  <div
+                    class="inline-flex h-10 items-center px-3 rounded-xl bg-white border border-slate-200"
+                  >
+                    <div
+                      class="w-4 h-4 border-2 border-slate-300 border-t-slate-700 rounded-full animate-spin"
+                    ></div>
+                  </div>
+                {:else if navUser}
+                  <a
+                    use:route
+                    href="/dashboard"
+                    class={utilityPillClass("/dashboard")}
+                  >
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"
+                    ></span>
+                    Dashboard
+                  </a>
+                  <a
+                    use:route
+                    href="/classroom"
+                    class={utilityPillClass("/classroom")}
+                  >
+                    Classroom
+                  </a>
+                  {#if currentRole === "admin"}
+                    <a
+                      use:route
+                      href="/admin"
+                      class="inline-flex h-10 items-center gap-2 px-3.5 text-xs sm:text-sm font-semibold rounded-xl transition-colors {isRouteActive(
+                        '/admin',
+                      )
+                        ? 'text-white bg-linear-to-r from-slate-900 to-slate-700'
+                        : 'text-slate-700 bg-white border border-slate-200 hover:bg-slate-50'}"
+                    >
+                      Admin
+                    </a>
+                  {/if}
+                {:else}
+                  <a
+                    use:route
+                    href="/register"
+                    class="inline-flex h-10 items-center gap-2 px-4 text-sm font-semibold text-white bg-linear-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 rounded-xl transition-colors active:scale-95"
+                  >
+                    Sign In
+                  </a>
+                {/if}
+              </div>
+            </div>
+
+            <div
+              class="mt-3 grid gap-3 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-center"
+            >
+              <div class="min-w-0">
+                <GlobalSearch />
+              </div>
+
+              <div class="flex items-center gap-2 overflow-x-auto pb-1 xl:pb-0">
+                <a use:route href="/" class={navPillClass("/", true)}>
+                  <svg
+                    class="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M3 10.5L12 3l9 7.5V21h-6v-6H9v6H3V10.5z"
+                    />
+                  </svg>
+                  Home
+                </a>
+                <a use:route href="/clubs" class={navPillClass("/clubs")}>
+                  <svg
+                    class="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M17 20h5v-2a4 4 0 00-5-3.87M17 20H7m10 0v-2c0-.65-.12-1.28-.34-1.87M7 20H2v-2a4 4 0 015-3.87M7 20v-2c0-.65.12-1.28.34-1.87M15 7a3 3 0 11-6 0 3 3 0 016 0z"
+                    />
+                  </svg>
+                  Clubs
+                </a>
+                <a use:route href="/events" class={navPillClass("/events")}>
+                  <svg
+                    class="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M8 7V3m8 4V3m-9 8h10m-13 9h16a2 2 0 002-2V7a2 2 0 00-2-2H4a2 2 0 00-2 2v11a2 2 0 002 2z"
+                    />
+                  </svg>
+                  Events
+                </a>
+                <a use:route href="/books" class={navPillClass("/books")}>
+                  <svg
+                    class="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M12 6.25v13.5m0-13.5c-1.9-1.45-4.5-2.25-7.25-2.25v13.5c2.75 0 5.35.8 7.25 2.25m0-13.5c1.9-1.45 4.5-2.25 7.25-2.25v13.5c-2.75 0-5.35.8-7.25 2.25"
+                    />
+                  </svg>
+                  Books
+                </a>
+                <a use:route href="/map" class={navPillClass("/map")}>
+                  <svg
+                    class="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M17.7 8.3A5.7 5.7 0 116.3 8.3c0 4.9 5.7 10.7 5.7 10.7s5.7-5.8 5.7-10.7z"
+                    />
+                    <circle cx="12" cy="8.3" r="2.2"></circle>
+                  </svg>
+                  Map
+                </a>
+                <a use:route href="/notices" class={navPillClass("/notices")}>
+                  <svg
+                    class="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M8 3h7l4 4v13a1 1 0 01-1 1H8a2 2 0 01-2-2V5a2 2 0 012-2z"
+                    />
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M15 3v5h5M10 12h6M10 16h6"
+                    />
+                  </svg>
+                  Notices
+                </a>
+              </div>
+            </div>
+          </div>
+        </nav>
+      </header>
+    {/if}
+
+    <!-- Error Toast -->
+    <ErrorToast bind:show={showError} title="Access Denied">
+      Please use your <span class="font-medium text-gray-900"
+        >@pcampus.edu.np</span
       >
-        <p class="text-gray-500 text-sm">
-          Copyright 2026 Smart Pulchowk. Built for IOE Pulchowk Campus.
-        </p>
-        <div class="flex items-center gap-6">
-          <!-- svelte-ignore a11y_invalid_attribute -->
-          <a
-            href="#"
-            class="text-gray-400 hover:text-gray-600 transition-colors"
-            >Privacy</a
-          >
-          <!-- svelte-ignore a11y_invalid_attribute -->
-          <a
-            href="#"
-            class="text-gray-400 hover:text-gray-600 transition-colors">Terms</a
-          >
-          <!-- svelte-ignore a11y_invalid_attribute -->
-          <a
-            href="#"
-            class="text-gray-400 hover:text-gray-600 transition-colors"
-            >Contact</a
-          >
+      email address to sign in.
+    </ErrorToast>
+
+    <main
+      class="{isEmbedded ? 'h-screen' : 'min-h-[calc(100vh-4rem)]'} relative"
+    >
+      {#if !isMapRoute}
+        <div
+          class="pointer-events-none absolute inset-0 z-0 opacity-35 bg-[linear-gradient(to_right,rgba(148,163,184,0.08)_1px,transparent_1px),linear-gradient(to_bottom,rgba(148,163,184,0.08)_1px,transparent_1px)] bg-size-[42px_42px]"
+        ></div>
+      {/if}
+      {#if MapComponent}
+        <div
+          class="absolute inset-0 z-0 transition-opacity duration-300 {isMapRoute
+            ? 'opacity-100 visible'
+            : 'opacity-0 invisible pointer-events-none'}"
+        >
+          <MapComponent />
         </div>
+      {/if}
+      <div class={isMapRoute ? "hidden" : "contents"}>
+        <Router bind:instance {routes} />
       </div>
-    </footer>
-  {/if}
+    </main>
+  </div>
 </QueryClientProvider>

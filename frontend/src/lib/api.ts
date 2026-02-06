@@ -2105,7 +2105,10 @@ export interface GlobalSearchResponse {
   query: string
   clubs: Club[]
   events: Array<
-    Pick<ClubEvent, 'id' | 'title' | 'description' | 'eventStartTime' | 'eventEndTime' | 'venue' | 'clubId'> & {
+    Pick<
+      ClubEvent,
+      'id' | 'title' | 'description' | 'eventStartTime' | 'eventEndTime' | 'venue' | 'clubId' | 'bannerUrl'
+    > & {
       club?: Pick<Club, 'id' | 'name' | 'logoUrl'>
     }
   >
@@ -2131,6 +2134,7 @@ export interface GlobalSearchResponse {
     name: string
     description: string
     coordinates: { lat: number; lng: number }
+    icon: string
     services: Array<{ name: string; purpose: string; location: string }>
   }>
   total: number
@@ -2147,6 +2151,7 @@ export async function searchEverything(
 
     const res = await fetch(`${API_SEARCH}?${params.toString()}`, {
       credentials: 'include',
+      cache: 'no-store',
     })
     return await res.json()
   } catch (error: any) {
