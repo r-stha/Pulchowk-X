@@ -76,10 +76,7 @@
         </a>
       {/if}
 
-      <div
-        class="w-full sm:w-auto h-px bg-slate-200 sm:h-8 mx-2 hidden sm:block"
-      ></div>
-
+      <div class="w-1 h-10 mx-2 rounded-full bg-slate-200"></div>
       <!-- Feature Pills -->
       <a
         use:route
