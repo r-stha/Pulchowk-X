@@ -112,19 +112,23 @@
   async function loadClub() {
     loading = true;
     error = null;
+    club = null;
+    profile = null;
+    eventCategoriesList = [];
     try {
       const [clubRes, profileRes] = await Promise.all([
         getClub(parseInt(clubId)),
         getClubProfile(parseInt(clubId)),
       ]);
 
-      if (clubRes.success && clubRes.clubData) {
+      if (clubRes?.success && clubRes.clubData) {
         club = clubRes.clubData;
       } else {
-        error = clubRes.message || "Club not found";
+        error = clubRes?.message || "Club not found";
+        return;
       }
 
-      if (profileRes.success) {
+      if (profileRes?.success) {
         profile = profileRes.profile;
         if (profile) {
           editedProfile = { ...profile };

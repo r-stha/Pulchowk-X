@@ -191,8 +191,20 @@ export async function getClub(
   const clone = res.clone()
   try {
     const json = await res.json()
-    return json.data
+    if (typeof json?.data?.success === 'boolean') {
+      return json.data
+    }
+    if (typeof json?.success === 'boolean') {
+      return json
+    }
+    if (res.status === 404) {
+      return { success: false, message: 'Club not found' }
+    }
+    return { success: false, message: 'Invalid server response' }
   } catch (e) {
+    if (res.status === 404) {
+      return { success: false, message: 'Club not found' }
+    }
     console.error('Failed to parse getClub response', await clone.text())
     return { success: false, message: 'Invalid server response' }
   }
