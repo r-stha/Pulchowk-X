@@ -226,8 +226,7 @@
     const value =
       (data.thumbnailUrl as string | undefined) ||
       (data.bannerUrl as string | undefined) ||
-      (data.attachmentUrl as string | undefined) ||
-      (data.actorAvatarUrl as string | undefined);
+      (data.attachmentUrl as string | undefined);
     return typeof value === "string" && value.trim().length > 0 ? value : null;
   }
 
@@ -309,7 +308,8 @@
       string,
       string | number | boolean | null
     >;
-    const title = typeof data.eventTitle === "string" ? data.eventTitle.trim() : "";
+    const title =
+      typeof data.eventTitle === "string" ? data.eventTitle.trim() : "";
     if (title) return title;
     if (notification.type === "event_published") {
       const marker = " is now";
@@ -324,7 +324,8 @@
       string,
       string | number | boolean | null
     >;
-    const title = typeof data.noticeTitle === "string" ? data.noticeTitle.trim() : "";
+    const title =
+      typeof data.noticeTitle === "string" ? data.noticeTitle.trim() : "";
     if (title) return title;
     if (notification.type.startsWith("notice_")) return notification.body;
     return null;
@@ -341,7 +342,9 @@
       string | number | boolean | null
     >;
     const direct =
-      typeof data.assignmentTitle === "string" ? data.assignmentTitle.trim() : "";
+      typeof data.assignmentTitle === "string"
+        ? data.assignmentTitle.trim()
+        : "";
     if (direct) return direct;
     const quoted = extractQuotedText(notification.body);
     if (quoted) return quoted;
@@ -384,6 +387,18 @@
         action: "is interested in your book:",
         subject: listingTitle,
         suffix: listingTitle ? "." : " this book.",
+      };
+    }
+
+    if (
+      notification.type === "book_listed" ||
+      notification.type === "new_book"
+    ) {
+      return {
+        actor: actor || "Someone",
+        action: "listed a new book:",
+        subject: listingTitle,
+        suffix: listingTitle ? "." : "",
       };
     }
 
@@ -547,20 +562,14 @@
           >
             <div class="flex items-start justify-between gap-3">
               <div class="flex items-start gap-3">
-                {#if notification.type === "purchase_request" && (bookThumbUrl || actorAvatarUrl)}
+                {#if getIconKey(notification) === "book" && bookThumbUrl}
                   <div class="relative w-14 h-14 shrink-0">
-                    {#if bookThumbUrl}
-                      <img
-                        src={bookThumbUrl}
-                        alt="Book"
-                        class="w-14 h-14 rounded-lg object-cover border border-slate-200 bg-slate-100"
-                        loading="lazy"
-                      />
-                    {:else}
-                      <div
-                        class="w-14 h-14 rounded-lg border border-slate-200 bg-slate-100"
-                      ></div>
-                    {/if}
+                    <img
+                      src={bookThumbUrl}
+                      alt="Book"
+                      class="size-14 rounded-lg object-cover border border-slate-200 bg-slate-100"
+                      loading="lazy"
+                    />
                   </div>
                 {:else if getImageUrl(notification)}
                   <img
@@ -587,18 +596,12 @@
                         <line x1="3" y1="10" x2="21" y2="10"></line>
                       </svg>
                     {:else if getIconKey(notification) === "book"}
-                      <svg
-                        class="w-6 h-6"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                      >
-                        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
-                        <path
-                          d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"
-                        ></path>
-                      </svg>
+                      <img
+                        src="https://cdn-icons-png.flaticon.com/512/5402/5402751.png"
+                        alt="Book"
+                        class="w-6 h-6 object-contain"
+                        loading="lazy"
+                      />
                     {:else if getIconKey(notification) === "notice"}
                       <svg
                         class="w-6 h-6"
@@ -657,13 +660,17 @@
                       {/if}
                       <p class="text-sm text-slate-600">
                         {#if richText.actor}
-                          <span class="font-semibold text-slate-800">{richText.actor}</span>
+                          <span class="font-semibold text-slate-800"
+                            >{richText.actor}</span
+                          >
                           <span> </span>
                         {/if}
                         <span>{richText.action}</span>
                         {#if richText.subject}
                           <span> </span>
-                          <span class="font-semibold text-slate-800">{richText.subject}</span>
+                          <span class="font-semibold text-slate-800"
+                            >{richText.subject}</span
+                          >
                         {/if}
                         <span>{richText.suffix}</span>
                       </p>
