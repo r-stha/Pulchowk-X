@@ -163,13 +163,32 @@
     const requestId = Number(data.requestId || 0);
     const conversationId = Number(data.conversationId || 0);
     const noticeId = Number(data.noticeId || 0);
+    const noticeCategoryRaw =
+      typeof data.category === "string" ? data.category.trim() : "";
+    const noticeCategory =
+      noticeCategoryRaw === "results" ||
+      noticeCategoryRaw === "application_forms" ||
+      noticeCategoryRaw === "exam_centers" ||
+      noticeCategoryRaw === "general"
+        ? noticeCategoryRaw
+        : "";
+
+    const buildHref = (path: string, params: URLSearchParams) => {
+      const query = params.toString();
+      return query ? `${path}?${query}` : path;
+    };
 
     if (notification.type === "purchase_request") {
       const params = new URLSearchParams();
+      params.set("fromNotification", "1");
+      params.set("notificationId", String(notification.id));
       params.set("tab", "listings");
+      params.set("highlightTab", "listings");
       if (listingId > 0) params.set("listingId", String(listingId));
+      if (listingId > 0) params.set("highlightListingId", String(listingId));
       if (requestId > 0) params.set("requestId", String(requestId));
-      return `/books/my-books?${params.toString()}`;
+      if (requestId > 0) params.set("highlightRequestId", String(requestId));
+      return buildHref("/books/my-books", params);
     }
 
     if (
@@ -177,42 +196,116 @@
       notification.type === "purchase_request_removed"
     ) {
       const params = new URLSearchParams();
+      params.set("fromNotification", "1");
+      params.set("notificationId", String(notification.id));
       params.set("tab", "listings");
+      params.set("highlightTab", "listings");
       if (listingId > 0) params.set("listingId", String(listingId));
+      if (listingId > 0) params.set("highlightListingId", String(listingId));
       if (requestId > 0) params.set("requestId", String(requestId));
-      return `/books/my-books?${params.toString()}`;
+      if (requestId > 0) params.set("highlightRequestId", String(requestId));
+      return buildHref("/books/my-books", params);
     }
 
     if (notification.type === "request_response") {
       const params = new URLSearchParams();
+      params.set("fromNotification", "1");
+      params.set("notificationId", String(notification.id));
       params.set("tab", "requests");
+      params.set("highlightTab", "requests");
       if (listingId > 0) params.set("listingId", String(listingId));
+      if (listingId > 0) params.set("highlightListingId", String(listingId));
       if (requestId > 0) params.set("requestId", String(requestId));
-      return `/books/my-books?${params.toString()}`;
+      if (requestId > 0) params.set("highlightRequestId", String(requestId));
+      return buildHref("/books/my-books", params);
     }
 
-    if (conversationId > 0) return `/messages?conversation=${conversationId}`;
-    if (listingId > 0) return `/books/${listingId}`;
-    if (clubId > 0 && eventId > 0) return `/clubs/${clubId}/events/${eventId}`;
-    if (eventId > 0) return "/events";
-    if (noticeId > 0 || notification.type.startsWith("notice_"))
-      return "/notices";
+    if (conversationId > 0) {
+      const params = new URLSearchParams();
+      params.set("fromNotification", "1");
+      params.set("notificationId", String(notification.id));
+      params.set("conversation", String(conversationId));
+      params.set("highlightConversationId", String(conversationId));
+      return buildHref("/messages", params);
+    }
+
+    if (listingId > 0) {
+      const params = new URLSearchParams();
+      params.set("fromNotification", "1");
+      params.set("notificationId", String(notification.id));
+      params.set("highlight", "listing");
+      params.set("listingId", String(listingId));
+      return buildHref(`/books/${listingId}`, params);
+    }
+
+    if (clubId > 0 && eventId > 0) {
+      const params = new URLSearchParams();
+      params.set("fromNotification", "1");
+      params.set("notificationId", String(notification.id));
+      params.set("highlight", "event");
+      params.set("eventId", String(eventId));
+      return buildHref(`/clubs/${clubId}/events/${eventId}`, params);
+    }
+
+    if (eventId > 0) {
+      const params = new URLSearchParams();
+      params.set("fromNotification", "1");
+      params.set("notificationId", String(notification.id));
+      params.set("highlightEventId", String(eventId));
+      return buildHref("/events", params);
+    }
+
+    if (noticeId > 0 || notification.type.startsWith("notice_")) {
+      const params = new URLSearchParams();
+      params.set("fromNotification", "1");
+      params.set("notificationId", String(notification.id));
+      if (noticeId > 0) params.set("noticeId", String(noticeId));
+      if (noticeCategory) params.set("category", noticeCategory);
+      const path = noticeCategory ? `/notices/${noticeCategory}` : "/notices";
+      return buildHref(path, params);
+    }
+
     if (
       notification.type.includes("assignment") ||
       notification.type.includes("grading")
-    )
-      return "/classroom";
+    ) {
+      const params = new URLSearchParams();
+      params.set("fromNotification", "1");
+      params.set("notificationId", String(notification.id));
+      params.set("highlightSection", "assignments");
+      if (typeof data.assignmentId === "string" || typeof data.assignmentId === "number") {
+        params.set("assignmentId", String(data.assignmentId));
+      }
+      return buildHref("/classroom", params);
+    }
+
     if (
       notification.type === "role_changed" ||
       notification.type === "security_alert"
-    )
-      return "/settings";
+    ) {
+      const params = new URLSearchParams();
+      params.set("fromNotification", "1");
+      params.set("notificationId", String(notification.id));
+      params.set("highlightSection", "security");
+      return buildHref("/settings", params);
+    }
+
     if (
       notification.type === "admin_moderation_update" ||
       notification.type === "system_announcement"
-    )
-      return "/dashboard";
-    return "/dashboard";
+    ) {
+      const params = new URLSearchParams();
+      params.set("fromNotification", "1");
+      params.set("notificationId", String(notification.id));
+      params.set("highlightSection", "overview");
+      return buildHref("/dashboard", params);
+    }
+
+    const fallbackParams = new URLSearchParams();
+    fallbackParams.set("fromNotification", "1");
+    fallbackParams.set("notificationId", String(notification.id));
+    fallbackParams.set("highlightSection", "overview");
+    return buildHref("/dashboard", fallbackParams);
   }
 
   function formatTime(dateStr: string) {
@@ -230,6 +323,29 @@
       (data.bannerUrl as string | undefined) ||
       (data.attachmentUrl as string | undefined);
     return typeof value === "string" && value.trim().length > 0 ? value : null;
+  }
+
+  function isPdfUrl(url: string | null) {
+    if (!url) return false;
+    const normalized = url.toLowerCase();
+    return (
+      normalized.endsWith(".pdf") ||
+      normalized.includes("drive.google.com") ||
+      normalized.includes("docs.google.com")
+    );
+  }
+
+  function isImageUrl(url: string | null) {
+    if (!url) return false;
+    const normalized = url.toLowerCase();
+    return (
+      normalized.endsWith(".jpg") ||
+      normalized.endsWith(".jpeg") ||
+      normalized.endsWith(".png") ||
+      normalized.endsWith(".webp") ||
+      normalized.endsWith(".gif") ||
+      normalized.endsWith(".svg")
+    );
   }
 
   function getActorAvatarUrl(notification: InAppNotification) {
@@ -448,14 +564,15 @@
     }
 
     if (notification.type.startsWith("notice_")) {
+      const noticeActor = "Exam Controller Divison";
       const action =
         notification.type === "notice_deleted"
-          ? "removed a notice:"
+          ? "removed notice:"
           : notification.type === "notice_updated"
-            ? "updated a notice:"
-            : "published a notice:";
+            ? "updated notice:"
+            : "published notice:";
       return {
-        actor,
+        actor: noticeActor,
         action,
         subject: noticeTitle,
         suffix: noticeTitle ? "." : "",
@@ -604,6 +721,9 @@
         {#each loadedNotifications as notification (notification.id)}
           {@const actorAvatarUrl = getActorAvatarUrl(notification)}
           {@const bookThumbUrl = getBookThumbUrl(notification)}
+          {@const mediaUrl = getImageUrl(notification)}
+          {@const hasPdfMedia = isPdfUrl(mediaUrl)}
+          {@const hasImageMedia = isImageUrl(mediaUrl)}
           {@const richText = getRichNotificationText(notification)}
           <a
             use:route
@@ -627,13 +747,24 @@
                       loading="lazy"
                     />
                   </div>
-                {:else if getImageUrl(notification)}
+                {:else if hasImageMedia && mediaUrl}
                   <img
-                    src={getImageUrl(notification) || ""}
+                    src={mediaUrl}
                     alt={notification.title}
                     class="w-14 h-14 rounded-lg object-cover border border-slate-200 bg-slate-100 shrink-0"
                     loading="lazy"
                   />
+                {:else if hasPdfMedia}
+                  <div
+                    class="w-14 h-14 rounded-lg border border-slate-200 bg-slate-50 flex items-center justify-center shrink-0"
+                  >
+                    <img
+                      src="https://upload.wikimedia.org/wikipedia/commons/8/87/PDF_file_icon.svg"
+                      alt="PDF file"
+                      class="w-7 h-7 object-contain"
+                      loading="lazy"
+                    />
+                  </div>
                 {:else}
                   <div
                     class="w-14 h-14 rounded-lg border border-slate-200 bg-slate-100 flex items-center justify-center shrink-0 text-slate-600"

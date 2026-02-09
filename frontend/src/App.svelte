@@ -360,6 +360,10 @@
       component: Messages,
     },
     {
+      path: /^\/notices\/(?<category>results|application_forms|exam_centers|general)\/?$/,
+      component: Notices,
+    },
+    {
       path: /^\/notices\/?$/,
       component: Notices,
     },

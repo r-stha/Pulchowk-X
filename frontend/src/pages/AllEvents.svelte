@@ -1,4 +1,5 @@
-<script lang="ts">
+﻿<script lang="ts">
+  import { query as routeQuery } from "@mateothegreat/svelte5-router";
   import { getAllEvents, type ClubEvent } from '../lib/api'
   import LoadingSpinner from '../components/LoadingSpinner.svelte'
   import EventCard from '../components/EventCard.svelte'
@@ -11,6 +12,11 @@
 
   const session = authClient.useSession()
   let hasRedirectedToLogin = $state(false)
+  const highlightedEventIdParam = Number(routeQuery("highlightEventId") || 0);
+  let highlightedEventId = $state<number | null>(
+    highlightedEventIdParam > 0 ? highlightedEventIdParam : null,
+  )
+  let hasAppliedEventHighlight = $state(false)
 
   const query = createQuery(() => ({
     queryKey: ['events'],
@@ -80,6 +86,25 @@
       }
     },
   )
+
+  $effect(() => {
+    if (hasAppliedEventHighlight || !highlightedEventId) return;
+
+    const exists =
+      categorizedEvents.ongoing.some((event) => event.id === highlightedEventId) ||
+      categorizedEvents.upcoming.some((event) => event.id === highlightedEventId) ||
+      categorizedEvents.completed.some((event) => event.id === highlightedEventId);
+
+    if (!exists) return;
+
+    hasAppliedEventHighlight = true;
+    requestAnimationFrame(() => {
+      const element = document.getElementById(`event-${highlightedEventId}`);
+      if (element) {
+        element.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+    });
+  });
 </script>
 
 <div class="min-h-[calc(100vh-4rem)] bg-gray-50/30 px-8 py-6 sm:px-6 lg:px-8">
@@ -119,12 +144,19 @@
             </div>
             <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
               {#each categorizedEvents.ongoing as event, i (event.id)}
-                <EventCard
-                  {event}
-                  clubId={event.clubId.toString()}
-                  index={i}
-                  isOngoing={true}
-                />
+                <div
+                  id={"event-" + event.id}
+                  class={highlightedEventId === event.id
+                    ? "rounded-2xl ring-2 ring-cyan-400 ring-offset-2 notif-highlight-blink"
+                    : ""}
+                >
+                  <EventCard
+                    {event}
+                    clubId={event.clubId.toString()}
+                    index={i}
+                    isOngoing={true}
+                  />
+                </div>
               {/each}
             </div>
           </section>
@@ -156,7 +188,14 @@
           {:else}
             <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
               {#each categorizedEvents.upcoming as event, i (event.id)}
-                <EventCard {event} clubId={event.clubId.toString()} index={i} />
+                <div
+                  id={"event-" + event.id}
+                  class={highlightedEventId === event.id
+                    ? "rounded-2xl ring-2 ring-cyan-400 ring-offset-2 notif-highlight-blink"
+                    : ""}
+                >
+                  <EventCard {event} clubId={event.clubId.toString()} index={i} />
+                </div>
               {/each}
             </div>
           {/if}
@@ -175,12 +214,19 @@
               class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 opacity-75 grayscale-[0.5] hover:opacity-100 hover:grayscale-0 transition-all duration-500"
             >
               {#each categorizedEvents.completed as event, i (event.id)}
-                <EventCard
-                  {event}
-                  clubId={event.clubId.toString()}
-                  index={i}
-                  isCompleted={true}
-                />
+                <div
+                  id={"event-" + event.id}
+                  class={highlightedEventId === event.id
+                    ? "rounded-2xl ring-2 ring-cyan-400 ring-offset-2 notif-highlight-blink"
+                    : ""}
+                >
+                  <EventCard
+                    {event}
+                    clubId={event.clubId.toString()}
+                    index={i}
+                    isCompleted={true}
+                  />
+                </div>
               {/each}
             </div>
           </section>
@@ -189,3 +235,4 @@
     {/if}
   </div>
 </div>
+

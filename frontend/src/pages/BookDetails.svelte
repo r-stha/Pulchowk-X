@@ -1,6 +1,10 @@
 ﻿<script lang="ts">
   import { onMount, untrack } from "svelte";
-  import { route as routeAction, goto } from "@mateothegreat/svelte5-router";
+  import {
+    route as routeAction,
+    goto,
+    query as routeQuery,
+  } from "@mateothegreat/svelte5-router";
   import {
     getBookListingById,
     saveBook,
@@ -48,6 +52,7 @@
   let unblockSubmitting = $state(false);
   let trustFeedback = $state<string | null>(null);
   let trustError = $state<string | null>(null);
+  let highlightListing = $state(routeQuery("highlight") === "listing");
 
   // Modal States
   let requestToBuyModalOpen = $state(false);
@@ -438,7 +443,9 @@
   }
 </script>
 
-<div class="min-h-[calc(100vh-4rem)] bg-gray-50/50 px-4 py-5 sm:px-6 lg:px-8">
+<div class="min-h-[calc(100vh-4rem)] bg-gray-50/50 px-4 py-5 sm:px-6 lg:px-8 {highlightListing
+  ? 'ring-2 ring-cyan-400 ring-offset-2 bg-cyan-50/20 notif-highlight-blink'
+  : ''}">
   <div class="max-w-6xl mx-auto">
     <a
       href="/books"
@@ -1656,3 +1663,4 @@
     </div>
   </div>
 {/if}
+

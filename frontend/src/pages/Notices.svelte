@@ -1,4 +1,9 @@
-<script lang="ts">
+﻿<script lang="ts">
+  import {
+    goto,
+    query as routeQuery,
+  } from "@mateothegreat/svelte5-router";
+  import { onMount } from "svelte";
   import { authClient } from "../lib/auth-client";
   import { fade } from "svelte/transition";
   import {
@@ -14,6 +19,7 @@
   } from "../lib/api";
   import { createQuery, useQueryClient } from "@tanstack/svelte-query";
 
+  const { route } = $props();
   const session = authClient.useSession();
   const queryClient = useQueryClient();
   const sessionUser = $derived(
@@ -27,10 +33,25 @@
     | "exam_centers"
     | "general";
 
+  function asNoticeCategory(value: string | null | undefined): NoticeCategory | null {
+    const normalized = (value || "").trim();
+    if (
+      normalized === "results" ||
+      normalized === "application_forms" ||
+      normalized === "exam_centers" ||
+      normalized === "general"
+    ) {
+      return normalized;
+    }
+    return null;
+  }
+
   // State
   let activeCategory = $state<NoticeCategory>("results");
   let searchQuery = $state("");
   let expandedNoticeId = $state<number | null>(null);
+  let highlightedNoticeId = $state<number | null>(null);
+  let hasAppliedNoticeHighlight = $state(false);
 
   // Image preview modal
   let previewImage = $state<string | null>(null);
@@ -148,8 +169,16 @@
   }));
 
   function setCategory(category: NoticeCategory) {
+    const targetPath = `/notices/${category}`;
+    const currentPath =
+      typeof window !== "undefined" ? window.location.pathname : "";
+
     if (activeCategory !== category) {
       activeCategory = category;
+    }
+
+    if (currentPath !== targetPath) {
+      goto(targetPath);
     }
   }
 
@@ -192,6 +221,43 @@
       .length,
   );
 
+  const routeCategoryFromPath = $derived(
+    asNoticeCategory(
+      (route?.result?.path?.params?.category as string | undefined) || null,
+    ),
+  );
+
+  function syncNoticesRouteState() {
+    const categoryFromQuery = asNoticeCategory(routeQuery("category"));
+    const resolvedCategory = routeCategoryFromPath || categoryFromQuery || "results";
+    if (activeCategory !== resolvedCategory) {
+      activeCategory = resolvedCategory;
+    }
+
+    const noticeIdParam = Number(routeQuery("noticeId") || 0);
+    if (noticeIdParam > 0 && highlightedNoticeId !== noticeIdParam) {
+      highlightedNoticeId = noticeIdParam;
+      hasAppliedNoticeHighlight = false;
+    }
+  }
+
+  onMount(() => {
+    syncNoticesRouteState();
+    window.addEventListener("pushState", syncNoticesRouteState);
+    window.addEventListener("replaceState", syncNoticesRouteState);
+    window.addEventListener("popstate", syncNoticesRouteState);
+
+    return () => {
+      window.removeEventListener("pushState", syncNoticesRouteState);
+      window.removeEventListener("replaceState", syncNoticesRouteState);
+      window.removeEventListener("popstate", syncNoticesRouteState);
+    };
+  });
+
+  $effect(() => {
+    syncNoticesRouteState();
+  });
+
   function openImagePreview(url: string, title: string) {
     previewImage = url;
     previewTitle = title;
@@ -213,6 +279,24 @@
         }
       }
     }
+  });
+
+  $effect(() => {
+    if (hasAppliedNoticeHighlight || !highlightedNoticeId) return;
+    if (!filteredNotices.length) return;
+
+    const target = filteredNotices.find((n) => n.id === highlightedNoticeId);
+    if (!target) return;
+
+    hasAppliedNoticeHighlight = true;
+    expandedNoticeId = target.id;
+
+    requestAnimationFrame(() => {
+      const element = document.getElementById(`notice-${target.id}`);
+      if (element) {
+        element.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+    });
   });
 
   function closeImagePreview() {
@@ -734,7 +818,11 @@
       <div class="space-y-2.5" in:fade={{ delay: 100 }}>
         {#each filteredNotices as notice (notice.id)}
           <div
-            class="group bg-white rounded-xl border border-slate-200 shadow-sm hover:shadow-md hover:border-slate-300 transition-all overflow-hidden"
+            id={"notice-" + notice.id}
+            class="group bg-white rounded-xl border border-slate-200 shadow-sm hover:shadow-md hover:border-slate-300 transition-all overflow-hidden {highlightedNoticeId ===
+            notice.id
+              ? 'ring-2 ring-cyan-400 ring-offset-2 border-cyan-300 bg-cyan-50/30 notif-highlight-blink'
+              : ''}"
           >
             <!-- Notice Header -->
             <button
@@ -1379,3 +1467,4 @@
     overflow: hidden;
   }
 </style>
+

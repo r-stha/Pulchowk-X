@@ -1,5 +1,5 @@
-<script lang="ts">
-  import { route } from '@mateothegreat/svelte5-router'
+﻿<script lang="ts">
+  import { route, query as routeQuery } from '@mateothegreat/svelte5-router'
   import { authClient } from '../lib/auth-client'
   import {
     getEnrollments,
@@ -236,6 +236,13 @@
   )
 
   let activeTab = $state<'assignments' | 'events' | 'books'>('assignments')
+  let highlightedSection = $state<string | null>(
+    (routeQuery('highlightSection') as string | undefined) || null,
+  )
+
+  $effect(() => {
+    if (!highlightedSection) return
+  })
 </script>
 
 <div
@@ -312,7 +319,10 @@
       </div>
     {:else}
       <!-- User Header -->
-      <div class="flex flex-wrap items-center justify-between gap-3 mb-6">
+      <div class="flex flex-wrap items-center justify-between gap-3 mb-6 rounded-2xl {highlightedSection ===
+        'overview'
+        ? 'ring-2 ring-cyan-400 ring-offset-2 px-3 py-3 bg-cyan-50/30 border border-cyan-300 notif-highlight-blink'
+        : ''}">
         <div class="flex items-center gap-3 min-w-0">
           <div
             class="w-12 h-12 rounded-xl overflow-hidden border-2 border-emerald-200 shadow-sm bg-emerald-50"
@@ -774,7 +784,7 @@
                     href="/classroom"
                     use:route
                     class="block text-center text-xs font-medium text-violet-600 hover:underline py-2"
-                    >View all {pendingAssignments.length} assignments →</a
+                    >View all {pendingAssignments.length} assignments â†’</a
                   >
                 {/if}
               </div>
@@ -812,7 +822,7 @@
                   href="/events"
                   use:route
                   class="inline-block mt-2 text-xs font-medium text-blue-600 hover:underline"
-                  >Explore Events →</a
+                  >Explore Events â†’</a
                 >
               </div>
             {:else}
@@ -883,7 +893,7 @@
                       href="/books/sell"
                       use:route
                       class="inline-block mt-1 text-xs font-medium text-emerald-600 hover:underline"
-                      >Sell a book →</a
+                      >Sell a book â†’</a
                     >
                   </div>
                 {:else}
@@ -978,7 +988,7 @@
                     href="/books/my-books"
                     use:route
                     class="text-xs font-medium text-emerald-600 hover:underline"
-                    >View saved books →</a
+                    >View saved books â†’</a
                   >
                 </div>
               {/if}
@@ -989,3 +999,4 @@
     {/if}
   </div>
 </div>
+

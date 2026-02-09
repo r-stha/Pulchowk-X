@@ -1,4 +1,5 @@
 ﻿<script lang="ts">
+  import { query as routeQuery } from '@mateothegreat/svelte5-router'
   import { createQuery } from '@tanstack/svelte-query'
   import { authClient } from '../lib/auth-client'
   import StyledSelect from '../components/StyledSelect.svelte'
@@ -277,6 +278,13 @@
   })
 
   let studentView = $state<'todo' | 'done' | 'subjects'>('todo')
+  let highlightedSection = $state<string | null>(
+    (routeQuery('highlightSection') as string | undefined) || null,
+  )
+
+  $effect(() => {
+    if (!highlightedSection) return
+  })
 
   const studentAssignments = $derived.by(() => {
     const subjects = mySubjectsQuery.data?.subjects || []
@@ -337,7 +345,10 @@
     class="pointer-events-none absolute -bottom-40 -left-40 h-96 w-96 rounded-full bg-blue-200/15 blur-3xl"
   ></div>
 
-  <div class="max-w-5xl mx-auto">
+  <div class="max-w-5xl mx-auto rounded-2xl {highlightedSection ===
+    'assignments'
+    ? 'ring-2 ring-cyan-400 ring-offset-2 px-3 py-3 bg-cyan-50/20 border border-cyan-300 notif-highlight-blink'
+    : ''}">
     {#if $session.isPending}
       <div class="flex flex-col items-center justify-center py-20">
         <div class="flex items-center gap-1.5 mb-3">
@@ -1195,3 +1206,4 @@
     {/if}
   </div>
 </div>
+

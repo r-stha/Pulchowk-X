@@ -1,4 +1,4 @@
-<script lang="ts">
+﻿<script lang="ts">
   import {
     route as routeAction,
     goto,
@@ -29,14 +29,74 @@
   const session = authClient.useSession()
   const queryClient = useQueryClient()
 
-  const initialTab = (routeQuery('tab') as any) || 'listings'
-  let activeTab = $state<
-    'listings' | 'saved' | 'requests' | 'messages' | 'reports' | 'blocks'
-  >(
-    initialTab,
+  type MyBooksTab =
+    | 'listings'
+    | 'saved'
+    | 'requests'
+    | 'messages'
+    | 'reports'
+    | 'blocks'
+  const VALID_TABS: MyBooksTab[] = [
+    'listings',
+    'saved',
+    'requests',
+    'messages',
+    'reports',
+    'blocks',
+  ]
+  function parseTab(value: string | null | undefined): MyBooksTab | null {
+    if (!value) return null
+    return VALID_TABS.includes(value as MyBooksTab)
+      ? (value as MyBooksTab)
+      : null
+  }
+  function getTabFromUrl(): MyBooksTab {
+    const highlightTabParam = parseTab(routeQuery('highlightTab'))
+    const tabParam = parseTab(routeQuery('tab'))
+    return highlightTabParam || tabParam || 'listings'
+  }
+
+  const highlightedListingIdParam = Number(
+    routeQuery('highlightListingId') || routeQuery('listingId') || 0,
   )
+  const highlightedRequestIdParam = Number(
+    routeQuery('highlightRequestId') || routeQuery('requestId') || 0,
+  )
+  let activeTab = $state<MyBooksTab>(getTabFromUrl())
+  let highlightedListingId = $state<number | null>(
+    highlightedListingIdParam > 0 ? highlightedListingIdParam : null,
+  )
+  let highlightedRequestId = $state<number | null>(
+    highlightedRequestIdParam > 0 ? highlightedRequestIdParam : null,
+  )
+  let listingHighlightApplied = $state(false)
+  let requestHighlightApplied = $state(false)
   let hasRedirectedToLogin = $state(false)
   let unblockingId = $state<string | null>(null)
+
+  function syncTabFromUrl() {
+    const nextTab = getTabFromUrl()
+    if (activeTab !== nextTab) {
+      activeTab = nextTab
+    }
+  }
+
+  function setActiveTab(nextTab: MyBooksTab) {
+    if (activeTab !== nextTab) {
+      activeTab = nextTab
+    }
+
+    if (typeof window === 'undefined') return
+
+    const url = new URL(window.location.href)
+    url.searchParams.set('tab', nextTab)
+    url.searchParams.delete('highlightTab')
+    const nextHref = `${url.pathname}${url.search}`
+    const currentHref = `${window.location.pathname}${window.location.search}`
+    if (nextHref !== currentHref) {
+      goto(nextHref)
+    }
+  }
 
   $effect(() => {
     if (hasRedirectedToLogin) return
@@ -46,6 +106,22 @@
       untrack(() => {
         goto('/register?message=login_required')
       })
+    }
+  })
+
+  $effect(() => {
+    syncTabFromUrl()
+  })
+
+  $effect(() => {
+    if (typeof window === 'undefined') return
+    window.addEventListener('pushState', syncTabFromUrl)
+    window.addEventListener('replaceState', syncTabFromUrl)
+    window.addEventListener('popstate', syncTabFromUrl)
+    return () => {
+      window.removeEventListener('pushState', syncTabFromUrl)
+      window.removeEventListener('replaceState', syncTabFromUrl)
+      window.removeEventListener('popstate', syncTabFromUrl)
     }
   })
 
@@ -209,6 +285,36 @@
       unblockingId = null
     }
   }
+
+  $effect(() => {
+    if (listingHighlightApplied || !highlightedListingId) return
+    if (activeTab !== 'listings') return
+    if (!myListingsQuery.data?.some((book) => book.id === highlightedListingId))
+      return
+
+    listingHighlightApplied = true
+    requestAnimationFrame(() => {
+      const element = document.getElementById(`listing-${highlightedListingId}`)
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      }
+    })
+  })
+
+  $effect(() => {
+    if (requestHighlightApplied || !highlightedRequestId) return
+    if (activeTab !== 'requests') return
+    if (!myRequestsQuery.data?.some((request) => request.id === highlightedRequestId))
+      return
+
+    requestHighlightApplied = true
+    requestAnimationFrame(() => {
+      const element = document.getElementById(`request-${highlightedRequestId}`)
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      }
+    })
+  })
 </script>
 
 <div class="min-h-[calc(100vh-4rem)] bg-gray-50/50 px-3 py-4 sm:px-5 lg:px-6">
@@ -276,7 +382,7 @@
       class="flex gap-1 mb-3 bg-white p-1 rounded-lg border border-gray-100 w-fit"
     >
       <button
-        onclick={() => (activeTab = 'listings')}
+        onclick={() => setActiveTab('listings')}
         class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all {activeTab ===
         'listings'
           ? 'bg-blue-600 text-white shadow-sm'
@@ -295,7 +401,7 @@
         {/if}
       </button>
       <button
-        onclick={() => (activeTab = 'saved')}
+        onclick={() => setActiveTab('saved')}
         class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all {activeTab ===
         'saved'
           ? 'bg-blue-600 text-white shadow-sm'
@@ -313,7 +419,7 @@
         {/if}
       </button>
       <button
-        onclick={() => (activeTab = 'requests')}
+        onclick={() => setActiveTab('requests')}
         class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all {activeTab ===
         'requests'
           ? 'bg-blue-600 text-white shadow-sm'
@@ -332,7 +438,7 @@
         {/if}
       </button>
       <button
-        onclick={() => (activeTab = 'messages')}
+        onclick={() => setActiveTab('messages')}
         class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all {activeTab ===
         'messages'
           ? 'bg-blue-600 text-white shadow-sm'
@@ -351,7 +457,7 @@
         {/if}
       </button>
       <button
-        onclick={() => (activeTab = 'reports')}
+        onclick={() => setActiveTab('reports')}
         class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all {activeTab ===
         'reports'
           ? 'bg-blue-600 text-white shadow-sm'
@@ -370,7 +476,7 @@
         {/if}
       </button>
       <button
-        onclick={() => (activeTab = 'blocks')}
+        onclick={() => setActiveTab('blocks')}
         class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all {activeTab ===
         'blocks'
           ? 'bg-blue-600 text-white shadow-sm'
@@ -446,7 +552,11 @@
         <div class="space-y-2.5" in:fade>
           {#each myListingsQuery.data as book (book.id)}
             <div
-              class="bg-white rounded-xl border border-gray-100 p-2.5 hover:shadow-md transition-shadow"
+              id={"listing-" + book.id}
+              class="bg-white rounded-xl border border-gray-100 p-2.5 hover:shadow-md transition-shadow {highlightedListingId ===
+              book.id
+                ? 'ring-2 ring-cyan-400 ring-offset-2 border-cyan-300 bg-cyan-50/30 notif-highlight-blink'
+                : ''}"
             >
               <div class="flex gap-2.5">
                 <!-- Image -->
@@ -520,7 +630,7 @@
 
                   <div class="flex items-center justify-between mt-2.5">
                     <span class="text-[10px] text-gray-400">
-                      Listed {formatDate(book.createdAt)} •
+                      Listed {formatDate(book.createdAt)} â€¢
                       {book.viewCount} views
                     </span>
                     <div
@@ -784,7 +894,11 @@
             {#if request.listing}
               {@const book = request.listing}
               <div
-                class="bg-white rounded-xl border border-gray-100 p-2.5 hover:shadow-md transition-all group relative overflow-hidden"
+                id={"request-" + request.id}
+                class="bg-white rounded-xl border border-gray-100 p-2.5 hover:shadow-md transition-all group relative overflow-hidden {highlightedRequestId ===
+                request.id
+                  ? 'ring-2 ring-cyan-400 ring-offset-2 border-cyan-300 bg-cyan-50/30 notif-highlight-blink'
+                  : ''}"
               >
                 <div class="flex gap-2.5">
                   <!-- Image -->
@@ -1132,4 +1246,5 @@
     overflow: hidden;
   }
 </style>
+
 

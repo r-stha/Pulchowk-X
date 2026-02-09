@@ -1,5 +1,9 @@
-<script lang="ts">
-  import { route as routeAction, goto } from "@mateothegreat/svelte5-router";
+﻿<script lang="ts">
+  import {
+    route as routeAction,
+    goto,
+    query as routeQuery,
+  } from "@mateothegreat/svelte5-router";
   import { authClient } from "../lib/auth-client";
   import {
     getClubEvents,
@@ -54,6 +58,7 @@
   let isRegistered = $state(false);
   let registeredStudents = $state<any[]>([]);
   let isClubOwner = $state(false);
+  let highlightEvent = $state(routeQuery("highlight") === "event");
 
   // Extra details state
   let extraDetails = $state<ExtraEventDetail | null>(null);
@@ -94,6 +99,10 @@
       }
     }
   }
+
+  $effect(() => {
+    if (!highlightEvent) return;
+  });
 
   $effect(() => {
     if (!clubId || !eventId) return;
@@ -631,7 +640,9 @@
   }
 </script>
 
-<div class="event-details-compact min-h-[calc(100vh-4rem)] bg-gray-50/30 px-4 py-8 sm:px-6 lg:px-8">
+<div class="event-details-compact min-h-[calc(100vh-4rem)] bg-gray-50/30 px-4 py-8 sm:px-6 lg:px-8 {highlightEvent
+  ? 'ring-2 ring-cyan-400 ring-offset-2 bg-cyan-50/20 notif-highlight-blink'
+  : ''}">
   <div class="max-w-5xl mx-auto">
     <!-- Breadcrumb -->
     <nav class="flex items-center gap-2 text-sm text-gray-500 mb-8" in:fade>
@@ -2215,3 +2226,4 @@
     border-radius: 0.78rem !important;
   }
 </style>
+

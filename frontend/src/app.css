@@ -46,3 +46,26 @@
     opacity: 1;
   }
 }
+
+@keyframes notif-highlight-border-blink {
+  0%,
+  100% {
+    border-color: rgb(103 232 249 / 1);
+    box-shadow:
+      0 0 0 2px rgb(34 211 238 / 0.9),
+      0 0 0 4px rgb(255 255 255 / 1);
+  }
+
+  50% {
+    border-color: rgb(103 232 249 / 0.35);
+    box-shadow:
+      0 0 0 2px rgb(34 211 238 / 0.2),
+      0 0 0 4px rgb(255 255 255 / 1);
+  }
+}
+
+@layer utilities {
+  .notif-highlight-blink {
+    animation: notif-highlight-border-blink 0.45s ease-in-out 3;
+  }
+}
