@@ -53,9 +53,7 @@ export const auth = betterAuth({
     after: createAuthMiddleware(async (ctx) => {
       if (ctx.path !== '/callback/:id') return
       const session = ctx.context.newSession
-      if (!session?.user?.email?.endsWith('@pcampus.edu.np')) {
-        throw ctx.redirect('/?message=unauthorized_domain')
-      }
+      if (!session?.user?.email) return
 
       // Determine role based on email format
       const email = session.user.email

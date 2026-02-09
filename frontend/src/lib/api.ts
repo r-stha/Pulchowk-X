@@ -220,11 +220,21 @@ export async function getClubEvents(
   })
   const clone = res.clone()
   try {
+    if (res.status === 401) {
+      return { success: false, message: 'Unauthorized' }
+    }
     const json = await res.json()
     if (json?.data?.clubEvents) {
       json.data.clubEvents = json.data.clubEvents.map(withDerivedStatus)
+      return json.data
     }
-    return json.data
+    if (typeof json?.success === 'boolean') {
+      if (json?.clubEvents) {
+        json.clubEvents = json.clubEvents.map(withDerivedStatus)
+      }
+      return json
+    }
+    return { success: false, message: 'Invalid server response' }
   } catch (e) {
     console.error('Failed to parse getClubEvents response', await clone.text())
     return { success: false, message: 'Invalid server response' }
@@ -642,8 +652,25 @@ export async function getExtraEventDetails(eventId: number): Promise<{
     const res = await fetch(`${API_CLUBS}/event-details/${eventId}`, {
       credentials: 'include',
     })
+    if (res.status === 401) {
+      return { success: false, details: null, message: 'Unauthorized' }
+    }
     const json = await res.json()
-    return json
+    if (typeof json?.success === 'boolean') {
+      return {
+        success: json.success,
+        details: json.details ?? null,
+        message: json.message,
+      }
+    }
+    if (typeof json?.data?.success === 'boolean') {
+      return {
+        success: json.data.success,
+        details: json.data.details ?? null,
+        message: json.data.message,
+      }
+    }
+    return { success: false, details: null, message: 'Invalid server response' }
   } catch (error: any) {
     return { success: false, details: null, message: error.message }
   }

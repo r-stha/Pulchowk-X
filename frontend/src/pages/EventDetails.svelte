@@ -33,6 +33,8 @@
 
   const session = authClient.useSession();
   const userId = $derived($session.data?.user?.id);
+  const isSessionLoading = $derived($session.isPending);
+  const isAuthenticated = $derived(!!$session.data?.user);
 
   let club = $state<Club | null>(null);
   let event = $state<ClubEvent | null>(null);
@@ -94,6 +96,17 @@
   }
 
   $effect(() => {
+    if (!clubId || !eventId) return;
+    if (isSessionLoading) return;
+    if (!isAuthenticated) {
+      loading = false;
+      error = null;
+      event = null;
+      extraDetails = null;
+      isRegistered = false;
+      registeredStudents = [];
+      return;
+    }
     if (clubId && eventId) {
       window.scrollTo(0, 0);
       loadEventDetails();
@@ -270,13 +283,22 @@
         club = clubResult.clubData;
       }
 
-      if (eventsResult.success && eventsResult.clubEvents) {
+      if (
+        clubResult.message === "Unauthorized" ||
+        eventsResult?.message === "Unauthorized" ||
+        detailsResult?.message === "Unauthorized"
+      ) {
+        error = "Please sign in to view full event details.";
+        return;
+      }
+
+      if (eventsResult?.success && eventsResult.clubEvents) {
         event =
           eventsResult.clubEvents.find((e) => e.id === parseInt(eventId)) ||
           null;
       }
 
-      if (detailsResult.success) {
+      if (detailsResult?.success) {
         extraDetails = detailsResult.details;
         if (extraDetails) editedDetails = { ...extraDetails };
       }
@@ -655,9 +677,52 @@
       >
     </nav>
 
-    {#if loading}
+    {#if loading || isSessionLoading}
       <div class="flex items-center justify-center py-20" in:fade>
         <LoadingSpinner size="lg" text="Loading event details..." />
+      </div>
+    {:else if !isAuthenticated}
+      <div
+        class="max-w-md mx-auto p-6 bg-white border border-blue-100 rounded-2xl shadow-lg text-center"
+        in:fly={{ y: 20, duration: 400 }}
+      >
+        <div
+          class="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4"
+        >
+          <svg
+            class="w-8 h-8 text-blue-600"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M12 11c.94 0 1.84.37 2.5 1.04.67.66 1.04 1.56 1.04 2.5v3.46H8.46V14.54c0-.94.37-1.84 1.04-2.5A3.53 3.53 0 0112 11zm0 0a3 3 0 100-6 3 3 0 000 6z"
+            ></path>
+          </svg>
+        </div>
+        <h2 class="text-xl font-bold text-slate-900 mb-2">Sign in required</h2>
+        <p class="text-slate-600 mb-5">
+          Please sign in to view full event details.
+        </p>
+        <div class="flex items-center justify-center gap-3">
+          <a
+            href="/register"
+            use:routeAction
+            class="px-5 py-2.5 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-colors shadow-sm"
+          >
+            Sign In
+          </a>
+          <a
+            href="/clubs/{clubId}/events"
+            use:routeAction
+            class="px-5 py-2.5 bg-slate-900 text-white font-semibold rounded-xl hover:bg-slate-800 transition-colors shadow-sm"
+          >
+            Back to Events
+          </a>
+        </div>
       </div>
     {:else if error}
       <div

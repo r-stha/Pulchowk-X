@@ -659,11 +659,11 @@
     {/if}
 
     <!-- Error Toast -->
-    <ErrorToast bind:show={showError} title="Access Denied">
-      Please use your <span class="font-medium text-gray-900"
+    <ErrorToast bind:show={showError} title="Sign-In Info">
+      Valid student-format <span class="font-medium text-gray-900"
         >@pcampus.edu.np</span
       >
-      email address to sign in.
+      emails get student access. Other emails can continue with guest access.
     </ErrorToast>
 
     <main
