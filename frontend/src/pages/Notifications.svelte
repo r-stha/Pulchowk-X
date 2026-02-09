@@ -108,7 +108,9 @@
     mutationFn: async (notificationId: number) => {
       const result = await markInAppNotificationRead(notificationId);
       if (!result.success) {
-        throw new Error(result.message || "Failed to mark notification as read");
+        throw new Error(
+          result.message || "Failed to mark notification as read",
+        );
       }
       return result;
     },
@@ -123,7 +125,11 @@
       if (target && wasUnread) {
         loadedNotifications = loadedNotifications.map((notification) =>
           notification.id === notificationId
-            ? { ...notification, isRead: true, readAt: new Date().toISOString() }
+            ? {
+                ...notification,
+                isRead: true,
+                readAt: new Date().toISOString(),
+              }
             : notification,
         );
 
@@ -158,7 +164,9 @@
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["in-app-notifications"] });
-      queryClient.invalidateQueries({ queryKey: ["notifications-unread-count"] });
+      queryClient.invalidateQueries({
+        queryKey: ["notifications-unread-count"],
+      });
     },
   }));
 
@@ -166,7 +174,9 @@
     mutationFn: async () => {
       const result = await markAllInAppNotificationsRead();
       if (!result.success) {
-        throw new Error(result.message || "Failed to mark all notifications as read");
+        throw new Error(
+          result.message || "Failed to mark all notifications as read",
+        );
       }
       return result;
     },
@@ -187,7 +197,11 @@
 
       queryClient.setQueryData(["notifications-unread-count"], 0);
       publishUnreadCount(0);
-      return { prevLoadedNotifications, prevTotalNotifications, prevUnreadCount };
+      return {
+        prevLoadedNotifications,
+        prevTotalNotifications,
+        prevUnreadCount,
+      };
     },
     onError: (_error, _variables, context) => {
       if (!context) return;
@@ -201,7 +215,9 @@
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["in-app-notifications"] });
-      queryClient.invalidateQueries({ queryKey: ["notifications-unread-count"] });
+      queryClient.invalidateQueries({
+        queryKey: ["notifications-unread-count"],
+      });
     },
   }));
 
@@ -323,7 +339,10 @@
       params.set("fromNotification", "1");
       params.set("notificationId", String(notification.id));
       params.set("highlightSection", "assignments");
-      if (typeof data.assignmentId === "string" || typeof data.assignmentId === "number") {
+      if (
+        typeof data.assignmentId === "string" ||
+        typeof data.assignmentId === "number"
+      ) {
         params.set("assignmentId", String(data.assignmentId));
       }
       return buildHref("/classroom", params);

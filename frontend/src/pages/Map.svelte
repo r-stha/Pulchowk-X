@@ -18,6 +18,10 @@
   import LoadingSpinner from "../components/LoadingSpinner.svelte";
   import { createQuery } from "@tanstack/svelte-query";
   import { chatBot } from "../lib/api";
+  import {
+    optimizeCloudinaryThumbnailUrl,
+    optimizeCloudinaryUrl,
+  } from "../lib/api-client";
 
   const SATELLITE_STYLE: any = {
     version: 8,
@@ -177,8 +181,20 @@
   }>({ title: "", description: "" });
   let imagesLoaded = $state<Record<number, boolean>>({});
   let imageProgress = $state<Record<number, number | undefined>>({});
+  let fullscreenImagesLoaded = $state<Record<number, boolean>>({});
+  let fullscreenImageProgress = $state<Record<number, number | undefined>>({});
   let progressFailedUrls = new Set<string>();
+  let fullscreenProgressFailedUrls = new Set<string>();
   const fullyLoadedUrls = new Set<string>();
+  const fullyLoadedFullscreenUrls = new Set<string>();
+
+  function getMapCardImageUrl(url: string): string {
+    return optimizeCloudinaryThumbnailUrl(url, 560, 320);
+  }
+
+  function getMapFullscreenImageUrl(url: string): string {
+    return optimizeCloudinaryUrl(url, 2200);
+  }
 
   async function loadWithProgress(url: string, index: number) {
     // Skip if we know this URL fails to provide progress (CORS/No-Content-Length)
@@ -244,6 +260,7 @@
   }
 
   const prefetchedUrls = new Set<string>();
+  const prefetchedFullscreenUrls = new Set<string>();
 
   function prefetchImage(url: string) {
     if (!url || prefetchedUrls.has(url)) return;
@@ -252,11 +269,76 @@
     prefetchedUrls.add(url);
   }
 
+  function prefetchFullscreenImage(url: string) {
+    if (!url || prefetchedFullscreenUrls.has(url)) return;
+    const img = new Image();
+    img.src = url;
+    prefetchedFullscreenUrls.add(url);
+  }
+
+  function prefetchFullscreenFromRaw(rawUrl: string | undefined) {
+    if (!rawUrl) return;
+    prefetchFullscreenImage(getMapFullscreenImageUrl(rawUrl));
+  }
+
+  async function loadFullscreenWithProgress(url: string, index: number) {
+    if (!url || fullscreenProgressFailedUrls.has(url)) {
+      fullscreenImageProgress[index] = undefined;
+      return;
+    }
+
+    if (fullyLoadedFullscreenUrls.has(url)) {
+      if (!fullscreenImagesLoaded[index]) {
+        fullscreenImagesLoaded[index] = true;
+        fullscreenImageProgress[index] = 100;
+      }
+      return;
+    }
+
+    if (fullscreenImagesLoaded[index]) {
+      fullscreenImageProgress[index] = 100;
+      fullyLoadedFullscreenUrls.add(url);
+      return;
+    }
+
+    fullscreenImageProgress[index] = 0;
+    fullscreenImagesLoaded[index] = false;
+
+    try {
+      const response = await fetch(url);
+      if (!response.ok) throw new Error("Network response was not ok");
+
+      const contentLength = response.headers.get("content-length");
+      if (!contentLength) throw new Error("Content-Length missing");
+
+      const total = parseInt(contentLength, 10);
+      let loaded = 0;
+
+      const reader = response.body?.getReader();
+      if (!reader) throw new Error("ReadableStream not supported");
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        loaded += value.length;
+        fullscreenImageProgress[index] = Math.round((loaded / total) * 100);
+      }
+
+      fullscreenImageProgress[index] = 100;
+      fullscreenImagesLoaded[index] = true;
+      fullyLoadedFullscreenUrls.add(url);
+    } catch (error) {
+      fullscreenProgressFailedUrls.add(url);
+      fullscreenImageProgress[index] = undefined;
+    }
+  }
+
   $effect(() => {
     if (popupOpen && popupData.image) {
-      const currentUrl = Array.isArray(popupData.image)
+      const rawCurrentUrl = Array.isArray(popupData.image)
         ? popupData.image[currentImageIndex]
         : popupData.image;
+      const currentUrl = rawCurrentUrl ? getMapCardImageUrl(rawCurrentUrl) : "";
 
       if (currentUrl) {
         const index = Array.isArray(popupData.image) ? currentImageIndex : 0;
@@ -266,14 +348,37 @@
       if (Array.isArray(popupData.image)) {
         // Prefetch next image
         const nextIndex = (currentImageIndex + 1) % popupData.image.length;
-        prefetchImage(popupData.image[nextIndex]);
+        prefetchImage(getMapCardImageUrl(popupData.image[nextIndex]));
 
         // Prefetch previous image (for smoother backward navigation)
         const prevIndex =
           (currentImageIndex - 1 + popupData.image.length) %
           popupData.image.length;
-        prefetchImage(popupData.image[prevIndex]);
+        prefetchImage(getMapCardImageUrl(popupData.image[prevIndex]));
       }
+    }
+  });
+
+  $effect(() => {
+    if (!showFullScreenImage || !popupData.image) return;
+
+    const rawCurrentUrl = Array.isArray(popupData.image)
+      ? popupData.image[currentImageIndex]
+      : popupData.image;
+    const currentUrl = rawCurrentUrl
+      ? getMapFullscreenImageUrl(rawCurrentUrl)
+      : "";
+    const index = Array.isArray(popupData.image) ? currentImageIndex : 0;
+
+    if (currentUrl) loadFullscreenWithProgress(currentUrl, index);
+
+    if (Array.isArray(popupData.image)) {
+      const nextIndex = (currentImageIndex + 1) % popupData.image.length;
+      const prevIndex =
+        (currentImageIndex - 1 + popupData.image.length) %
+        popupData.image.length;
+      prefetchFullscreenImage(getMapFullscreenImageUrl(popupData.image[nextIndex]));
+      prefetchFullscreenImage(getMapFullscreenImageUrl(popupData.image[prevIndex]));
     }
   });
 
@@ -2691,6 +2796,8 @@
               currentImageIndex = 0;
               imagesLoaded = {};
               imageProgress = {};
+              fullscreenImagesLoaded = {};
+              fullscreenImageProgress = {};
               popupOpen = true;
             }
           }}
@@ -2840,11 +2947,12 @@
                     </div>
                   {/if}
                   <img
-                    src={img}
+                    src={getMapCardImageUrl(img)}
                     alt={popupData.title}
                     onload={() => {
                       imagesLoaded[i] = true;
-                      fullyLoadedUrls.add(img);
+                      fullyLoadedUrls.add(getMapCardImageUrl(img));
+                      prefetchFullscreenFromRaw(img);
                     }}
                     class="high-quality-img absolute top-0 left-0 w-full h-full object-cover transition-transform duration-300 ease-in-out {imagesLoaded[
                       i
@@ -2952,11 +3060,14 @@
                   </div>
                 {/if}
                 <img
-                  src={popupData.image}
+                  src={getMapCardImageUrl(popupData.image)}
                   alt={popupData.title}
                   onload={() => {
                     imagesLoaded[0] = true;
-                    fullyLoadedUrls.add(popupData.image as string);
+                    fullyLoadedUrls.add(
+                      getMapCardImageUrl(popupData.image as string),
+                    );
+                    prefetchFullscreenFromRaw(popupData.image as string);
                   }}
                   class="high-quality-img w-full h-28 object-cover transition-transform duration-700 group-hover:scale-110 {imagesLoaded[0]
                     ? 'opacity-100'
@@ -3123,9 +3234,36 @@
             class="absolute top-0 left-0 w-full h-full flex items-center justify-center transition-transform duration-300 ease-in-out"
             style="transform: translateX({(i - currentImageIndex) * 100}%)"
           >
+            {#if !fullscreenImagesLoaded[i]}
+              <div
+                class="absolute inset-0 z-10 flex items-center justify-center bg-black/45"
+              >
+                {#if fullscreenImageProgress[i] !== undefined}
+                  <div class="flex flex-col items-center gap-3 text-white">
+                    <div class="text-sm font-semibold">
+                      {fullscreenImageProgress[i]}%
+                    </div>
+                    <div class="w-36 h-1.5 bg-white/30 rounded-full overflow-hidden">
+                      <div
+                        class="h-full bg-cyan-300 transition-all duration-200"
+                        style="width: {fullscreenImageProgress[i]}%"
+                      ></div>
+                    </div>
+                  </div>
+                {:else}
+                  <div
+                    class="w-10 h-10 border-4 border-white/30 border-t-white rounded-full animate-spin"
+                  ></div>
+                {/if}
+              </div>
+            {/if}
             <img
-              src={img}
+              src={getMapFullscreenImageUrl(img)}
               alt={popupData.title}
+              onload={() => {
+                fullscreenImagesLoaded[i] = true;
+                fullyLoadedFullscreenUrls.add(getMapFullscreenImageUrl(img));
+              }}
               class="w-full h-full object-contain select-none shadow-2xl"
             />
           </div>
@@ -3205,9 +3343,34 @@
           </div>
         {/if}
       {:else}
+        {#if !fullscreenImagesLoaded[0]}
+          <div class="absolute inset-0 z-10 flex items-center justify-center bg-black/45">
+            {#if fullscreenImageProgress[0] !== undefined}
+              <div class="flex flex-col items-center gap-3 text-white">
+                <div class="text-sm font-semibold">{fullscreenImageProgress[0]}%</div>
+                <div class="w-36 h-1.5 bg-white/30 rounded-full overflow-hidden">
+                  <div
+                    class="h-full bg-cyan-300 transition-all duration-200"
+                    style="width: {fullscreenImageProgress[0]}%"
+                  ></div>
+                </div>
+              </div>
+            {:else}
+              <div
+                class="w-10 h-10 border-4 border-white/30 border-t-white rounded-full animate-spin"
+              ></div>
+            {/if}
+          </div>
+        {/if}
         <img
-          src={popupData.image}
+          src={getMapFullscreenImageUrl(popupData.image)}
           alt={popupData.title}
+          onload={() => {
+            fullscreenImagesLoaded[0] = true;
+            fullyLoadedFullscreenUrls.add(
+              getMapFullscreenImageUrl(popupData.image as string),
+            );
+          }}
           class="w-full h-full object-contain select-none shadow-2xl"
         />
       {/if}
