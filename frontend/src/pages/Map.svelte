@@ -17,7 +17,12 @@
   import { onMount } from "svelte";
   import LoadingSpinner from "../components/LoadingSpinner.svelte";
   import { createQuery } from "@tanstack/svelte-query";
-  import { chatBot } from "../lib/api";
+  import {
+    chatBot,
+    type ChatBotAction,
+    type ChatBotLocation,
+    type ChatBotResponseData,
+  } from "../lib/api";
   import {
     optimizeCloudinaryThumbnailUrl,
     optimizeCloudinaryUrl,
@@ -1224,15 +1229,29 @@
     }
   }
 
+  type ChatRole = "user" | "assistant" | "error";
+
+  interface ChatMessage {
+    role: ChatRole;
+    content: string;
+    action?: ChatBotAction;
+    locations?: ChatBotLocation[];
+    intent?: string;
+    verified?: boolean;
+    sources?: string[];
+    follow_up?: string[];
+    isQuotaError?: boolean;
+  }
+
   let currentQuery = $state("");
   let queryToExecute = $state("");
-  let messages = $state<any[]>([]);
+  let messages = $state<ChatMessage[]>([]);
 
   const chatQuery = createQuery(() => ({
     queryKey: ["chatbot", queryToExecute],
     queryFn: async () => {
       const res = await chatBot(queryToExecute);
-      if (!res.success) {
+      if (!res.success || !res.data) {
         throw new Error(res.message || "Request failed");
       }
       return res.data;
@@ -1242,6 +1261,76 @@
     refetchOnWindowFocus: false,
     staleTime: 1000 * 60 * 60 * 24,
   }));
+
+  function flyToChatLocation(location: ChatBotLocation) {
+    if (!map) return;
+    const { lat, lng } = location.coordinates;
+    map.flyTo({
+      center: [lng, lat],
+      zoom: 20,
+      duration: 1200,
+      essential: true,
+    });
+  }
+
+  function applyChatMapAction(payload: ChatBotResponseData) {
+    if (!map || !payload.locations || payload.locations.length === 0) {
+      return;
+    }
+
+    const { action, locations } = payload;
+
+    if (action === "show_route" && locations.length >= 2) {
+      const startLoc =
+        locations.find((location) => location.role === "start") ?? locations[0];
+      const endLoc =
+        locations.find((location) => location.role === "end") ?? locations[1];
+
+      startPoint = {
+        coords: [startLoc.coordinates.lng, startLoc.coordinates.lat] as [
+          number,
+          number,
+        ],
+        name: startLoc.building_name,
+        feature: null,
+      };
+      navStartSearch = startLoc.building_name;
+
+      endPoint = {
+        coords: [endLoc.coordinates.lng, endLoc.coordinates.lat] as [
+          number,
+          number,
+        ],
+        name: endLoc.building_name,
+        feature: null,
+      };
+      navEndSearch = endLoc.building_name;
+
+      isNavigating = true;
+      chatOpen = false;
+      getDirections();
+      return;
+    }
+
+    flyToChatLocation(locations[0]);
+  }
+
+  function focusAssistantMessage(message: ChatMessage) {
+    if (!message.locations || message.locations.length === 0) {
+      return;
+    }
+
+    applyChatMapAction({
+      message: message.content,
+      locations: message.locations,
+      action: message.action ?? "show_location",
+    });
+  }
+
+  function formatIntentLabel(intent?: string): string {
+    if (!intent) return "";
+    return intent.replaceAll("_", " ");
+  }
 
   // Rate limit cooldown state
   let rateLimitCooldown = $state(0);
@@ -1281,7 +1370,7 @@
         {
           role: "error",
           content: isQuotaError
-            ? `⏱️ API limit reached. Please wait ${rateLimitCooldown || 30} seconds.`
+            ? `API limit reached. Please wait ${rateLimitCooldown || 30} seconds.`
             : "Something went wrong. Please try again.",
           isQuotaError,
         },
@@ -1292,68 +1381,22 @@
 
   $effect(() => {
     if (chatQuery.isSuccess && chatQuery.data && queryToExecute) {
+      const response = chatQuery.data;
       messages = [
         ...messages,
         {
           role: "assistant",
-          content: chatQuery.data.message,
-          locations: chatQuery.data.locations,
-          action: chatQuery.data.action,
+          content: response.message,
+          locations: response.locations,
+          action: response.action,
+          intent: response.intent,
+          verified: response.verified,
+          sources: response.sources,
+          follow_up: response.follow_up,
         },
       ];
 
-      if (
-        chatQuery.data.locations &&
-        chatQuery.data.locations.length > 0 &&
-        map
-      ) {
-        const { action, locations } = chatQuery.data;
-
-        // Handle route/directions request
-        if (action === "show_route" && locations.length >= 2) {
-          const startLoc =
-            locations.find((l: any) => l.role === "start") || locations[0];
-          const endLoc =
-            locations.find((l: any) => l.role === "end") || locations[1];
-
-          // Set up navigation with start and end points
-          startPoint = {
-            coords: [startLoc.coordinates.lng, startLoc.coordinates.lat] as [
-              number,
-              number,
-            ],
-            name: startLoc.building_name,
-            feature: null,
-          };
-          navStartSearch = startLoc.building_name;
-
-          endPoint = {
-            coords: [endLoc.coordinates.lng, endLoc.coordinates.lat] as [
-              number,
-              number,
-            ],
-            name: endLoc.building_name,
-            feature: null,
-          };
-          navEndSearch = endLoc.building_name;
-
-          // Activate navigation mode and get directions
-          isNavigating = true;
-          chatOpen = false; // Minimize chat to show the map
-          getDirections();
-        } else {
-          // Just fly to the first location for show_location or show_multiple_locations
-          const location = locations[0];
-          const { lat, lng } = location.coordinates;
-
-          map.flyTo({
-            center: [lng, lat],
-            zoom: 20,
-            duration: 2000,
-            essential: true,
-          });
-        }
-      }
+      applyChatMapAction(response);
       queryToExecute = "";
     }
   });
@@ -1370,16 +1413,17 @@
   function handleSubmit(e: Event) {
     e.preventDefault();
     if (!currentQuery.trim()) return;
+    const submittedQuery = currentQuery.trim();
 
     messages = [
       ...messages,
       {
         role: "user",
-        content: currentQuery,
+        content: submittedQuery,
       },
     ];
 
-    queryToExecute = currentQuery;
+    queryToExecute = submittedQuery;
     currentQuery = "";
   }
 </script>
@@ -1478,8 +1522,8 @@
               <div>
                 <p class="text-gray-900 font-semibold text-sm">Hello there!</p>
                 <p class="text-gray-500 text-xs mt-1">
-                  Ask me anything about Pulchowk Campus departments, landmarks,
-                  or directions.
+                  Ask admissions, office, hostel, library, notice, or
+                  navigation questions. I only answer verified campus info.
                 </p>
               </div>
             </div>
@@ -1500,7 +1544,61 @@
                     ? 'bg-red-50 text-red-600 border border-red-100'
                     : 'bg-white text-gray-800 rounded-bl-none border border-gray-100'}"
               >
-                {message.content}
+                {#if message.role === "assistant"}
+                  <div class="mb-1.5 flex flex-wrap items-center gap-1.5 text-[10px]">
+                    {#if message.verified === true}
+                      <span class="rounded-full bg-emerald-50 px-2 py-0.5 font-semibold text-emerald-700">
+                        Verified
+                      </span>
+                    {:else if message.verified === false}
+                      <span class="rounded-full bg-amber-50 px-2 py-0.5 font-semibold text-amber-700">
+                        Unverified fallback
+                      </span>
+                    {/if}
+                    {#if message.intent}
+                      <span class="rounded-full bg-slate-100 px-2 py-0.5 font-medium text-slate-700 capitalize">
+                        {formatIntentLabel(message.intent)}
+                      </span>
+                    {/if}
+                  </div>
+                {/if}
+
+                <p>{message.content}</p>
+
+                {#if message.role === "assistant" && message.locations && message.locations.length > 0}
+                  <div class="mt-2 flex flex-wrap gap-1.5">
+                    {#each message.locations as location}
+                      <button
+                        type="button"
+                        class="cursor-pointer rounded-full border border-blue-200 bg-blue-50 px-2 py-1 text-[11px] font-medium text-blue-700 hover:bg-blue-100"
+                        onclick={() => flyToChatLocation(location)}
+                      >
+                        {location.building_name}
+                      </button>
+                    {/each}
+                    {#if message.action === "show_route" && message.locations.length >= 2}
+                      <button
+                        type="button"
+                        class="cursor-pointer rounded-full border border-slate-300 bg-slate-100 px-2 py-1 text-[11px] font-medium text-slate-700 hover:bg-slate-200"
+                        onclick={() => focusAssistantMessage(message)}
+                      >
+                        Show route
+                      </button>
+                    {/if}
+                  </div>
+                {/if}
+
+                {#if message.role === "assistant" && message.follow_up && message.follow_up.length > 0}
+                  <p class="mt-2 text-[11px] text-slate-500">
+                    Where to go next: {message.follow_up[0]}
+                  </p>
+                {/if}
+
+                {#if message.role === "assistant" && message.sources && message.sources.length > 0}
+                  <p class="mt-1 text-[10px] text-slate-400">
+                    Source: {message.sources[0]}
+                  </p>
+                {/if}
               </div>
             </div>
           {/each}

@@ -932,7 +932,36 @@ export async function getAssignmentSubmissions(assignmentId: number): Promise<{
   }
 }
 
-export async function chatBot(query: string) {
+export type ChatBotAction =
+  | 'show_route'
+  | 'show_location'
+  | 'show_multiple_locations'
+
+export interface ChatBotLocation {
+  building_id: string
+  building_name: string
+  coordinates: { lat: number; lng: number }
+  service_name: string | null
+  service_location: string | null
+  role: 'start' | 'end' | 'destination'
+}
+
+export interface ChatBotResponseData {
+  message: string
+  locations: ChatBotLocation[]
+  action: ChatBotAction
+  intent?: string
+  verified?: boolean
+  sources?: string[]
+  follow_up?: string[]
+}
+
+export async function chatBot(query: string): Promise<{
+  success: boolean
+  data?: ChatBotResponseData
+  message?: string
+  errorType?: string
+}> {
   try {
     const res = await fetch(`/api/chatbot/chat`, {
       method: 'POST',
@@ -940,10 +969,11 @@ export async function chatBot(query: string) {
       credentials: 'include',
       body: JSON.stringify({ query }),
     })
-    const data = await res.json()
-
-    console.log(data)
-    return { success: true, ...data }
+    const payload = await res.json()
+    if (typeof payload?.success === 'boolean') {
+      return payload
+    }
+    return { success: false, message: 'Invalid chatbot response' }
   } catch (error: any) {
     return { success: false, message: error.message }
   }

@@ -6,6 +6,7 @@
 		"dev": "nodemon --exec tsx src/index.ts",
 		"dev:prod": "npm run build:frontend && npm run dev",
 		"start": "tsx src/index.ts",
+		"eval:student-support": "tsx src/scripts/eval-student-support.ts",
 		"db:generate": "tsx node_modules/drizzle-kit/bin.cjs generate",
 		"db:migrate": "tsx node_modules/drizzle-kit/bin.cjs migrate",
 		"db:studio": "tsx node_modules/drizzle-kit/bin.cjs studio"

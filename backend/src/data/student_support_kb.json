@@ -1,0 +1,806 @@
+{
+  "version": "2026-02-09",
+  "entries": [
+    {
+      "id": "admission_documents",
+      "intent": "process_howto",
+      "category": "admissions_onboarding",
+      "question_patterns": [
+        "admission documents",
+        "documents for admission",
+        "what documents do i need for admission"
+      ],
+      "keywords": [
+        "admission",
+        "document",
+        "certificate",
+        "transcript",
+        "migration",
+        "photo"
+      ],
+      "answer": "For admission documentation support, start at the Dean Office. Carry your academic certificates, mark sheets, identification, and required photographs, plus photocopies.",
+      "location_ids": ["dean-office"],
+      "source_type": "office_confirmed",
+      "last_verified_at": "2026-02-09",
+      "follow_up": [
+        "Bring both originals and photocopies.",
+        "Ask the Dean Office staff for the latest checklist before submission."
+      ]
+    },
+    {
+      "id": "admission_help_office",
+      "intent": "office_lookup",
+      "category": "admissions_onboarding",
+      "question_patterns": [
+        "where is admission office",
+        "who handles admission queries",
+        "admission help"
+      ],
+      "keywords": ["admission", "office", "help", "enrollment"],
+      "answer": "Admission-related support is handled through the Dean Office. Visit there first for process clarification and official verification.",
+      "location_ids": ["dean-office"],
+      "source_type": "office_confirmed",
+      "last_verified_at": "2026-02-09",
+      "follow_up": [
+        "Ask for the current intake workflow and deadline sheet."
+      ]
+    },
+    {
+      "id": "first_semester_start",
+      "intent": "process_howto",
+      "category": "academic_onboarding",
+      "question_patterns": [
+        "how do i start first semester",
+        "new student first week",
+        "first semester onboarding"
+      ],
+      "keywords": [
+        "first semester",
+        "new student",
+        "orientation",
+        "department",
+        "class"
+      ],
+      "answer": "For first-semester onboarding, confirm your department office, class routine, and registration status through your department plus the Dean Office.",
+      "location_ids": [
+        "dean-office",
+        "dept-civil",
+        "dept-mechanical-aerospace",
+        "dept-electrical-electronics-computer",
+        "dept-architecture",
+        "dept-applied-sciences",
+        "dept-science-humanities"
+      ],
+      "source_type": "office_confirmed",
+      "last_verified_at": "2026-02-09",
+      "follow_up": [
+        "Check your assigned department first, then verify unresolved items at Dean Office."
+      ]
+    },
+    {
+      "id": "department_contact",
+      "intent": "office_lookup",
+      "category": "academic_onboarding",
+      "question_patterns": [
+        "where is my department office",
+        "department contact",
+        "which office for department queries"
+      ],
+      "keywords": [
+        "department",
+        "civil",
+        "electrical",
+        "electronics",
+        "computer",
+        "mechanical",
+        "aerospace",
+        "architecture",
+        "applied sciences",
+        "humanities"
+      ],
+      "answer": "Department-specific academic questions should be handled directly in your department office; each department has dedicated rooms for student academic support.",
+      "location_ids": [
+        "dept-civil",
+        "dept-mechanical-aerospace",
+        "dept-electrical-electronics-computer",
+        "dept-architecture",
+        "dept-applied-sciences",
+        "dept-science-humanities"
+      ],
+      "source_type": "official_page",
+      "last_verified_at": "2026-02-09",
+      "follow_up": [
+        "Carry your student ID and department details for faster support."
+      ]
+    },
+    {
+      "id": "course_registration",
+      "intent": "process_howto",
+      "category": "registration_and_records",
+      "question_patterns": [
+        "course registration process",
+        "how to register courses",
+        "semester registration"
+      ],
+      "keywords": [
+        "course registration",
+        "register",
+        "semester form",
+        "enrollment"
+      ],
+      "answer": "Course registration issues are typically handled through your department and administrative offices; start with your department office and escalate through Dean Office if required.",
+      "location_ids": [
+        "dean-office",
+        "dept-civil",
+        "dept-mechanical-aerospace",
+        "dept-electrical-electronics-computer",
+        "dept-architecture",
+        "dept-applied-sciences",
+        "dept-science-humanities"
+      ],
+      "source_type": "office_confirmed",
+      "last_verified_at": "2026-02-09",
+      "follow_up": [
+        "Keep registration receipts and forms with you during clarification."
+      ]
+    },
+    {
+      "id": "exam_form_and_admit_card",
+      "intent": "process_howto",
+      "category": "registration_and_records",
+      "question_patterns": [
+        "exam form",
+        "admit card issue",
+        "exam registration"
+      ],
+      "keywords": [
+        "exam",
+        "admit card",
+        "registration",
+        "form",
+        "roll number"
+      ],
+      "answer": "For exam form, admit card, and exam registration matters, contact the Exam Control Office. They also handle official exam record corrections.",
+      "location_ids": ["exam-control-office"],
+      "source_type": "office_confirmed",
+      "last_verified_at": "2026-02-09",
+      "follow_up": [
+        "Carry your student details and any payment/reference documents."
+      ]
+    },
+    {
+      "id": "transcript_and_result_query",
+      "intent": "office_lookup",
+      "category": "registration_and_records",
+      "question_patterns": [
+        "transcript collection",
+        "result query office",
+        "where to ask about transcript"
+      ],
+      "keywords": ["transcript", "result", "mark sheet", "exam query"],
+      "answer": "Transcript and official exam-result record queries are handled by the Exam Control Office.",
+      "location_ids": ["exam-control-office"],
+      "source_type": "office_confirmed",
+      "last_verified_at": "2026-02-09",
+      "follow_up": [
+        "If your issue is admission/identity-related, also check with Dean Office."
+      ]
+    },
+    {
+      "id": "id_card_lost",
+      "intent": "escalation",
+      "category": "admissions_onboarding",
+      "question_patterns": [
+        "lost id card",
+        "replace id card",
+        "id card missing"
+      ],
+      "keywords": ["id card", "lost", "replacement"],
+      "answer": "For lost or damaged student ID cards, report to the Dean Office for replacement steps and verification.",
+      "location_ids": ["dean-office"],
+      "source_type": "office_confirmed",
+      "last_verified_at": "2026-02-09",
+      "follow_up": [
+        "Carry any identity proof and your student details while reporting."
+      ]
+    },
+    {
+      "id": "library_hours_and_membership",
+      "intent": "policy_query",
+      "category": "library",
+      "question_patterns": [
+        "library hours",
+        "library timing",
+        "library membership"
+      ],
+      "keywords": ["library", "timing", "hours", "membership", "borrow"],
+      "answer": "Library timing and membership support are handled at Pulchowk Library. Visit the counter for borrowing rules, renewal policy, and membership details.",
+      "location_ids": ["pulchowk-library"],
+      "source_type": "office_confirmed",
+      "last_verified_at": "2026-02-09",
+      "follow_up": [
+        "Carry your student ID for borrowing and membership queries."
+      ]
+    },
+    {
+      "id": "where_to_study",
+      "intent": "service_lookup",
+      "category": "library",
+      "question_patterns": [
+        "best place to study",
+        "where can i study",
+        "quiet study space"
+      ],
+      "keywords": ["study", "quiet", "reading room", "library hall"],
+      "answer": "Pulchowk Library is the primary verified study space for quiet reading and academic preparation.",
+      "location_ids": ["pulchowk-library"],
+      "source_type": "map_data",
+      "last_verified_at": "2026-02-09",
+      "follow_up": [
+        "Use reading areas for focused study and ask library staff for section guidance."
+      ]
+    },
+    {
+      "id": "hostel_locations",
+      "intent": "service_lookup",
+      "category": "hostel_and_food",
+      "question_patterns": [
+        "where are the hostels",
+        "boys hostel location",
+        "girls hostel location",
+        "msc hostel location"
+      ],
+      "keywords": ["hostel", "boys", "girls", "msc"],
+      "answer": "Boys hostels are in Blocks A, B, and C; Girls Hostel and MSC Hostel are separate dedicated residential facilities inside campus.",
+      "location_ids": [
+        "block-a-hostel",
+        "block-b-hostel",
+        "block-c-hostel",
+        "girls-hostel",
+        "msc-hostel"
+      ],
+      "source_type": "map_data",
+      "last_verified_at": "2026-02-09",
+      "follow_up": [
+        "For allocation procedures, confirm with the relevant hostel administration office."
+      ]
+    },
+    {
+      "id": "hostel_allocation_help",
+      "intent": "office_lookup",
+      "category": "hostel_and_food",
+      "question_patterns": [
+        "hostel allocation process",
+        "hostel application",
+        "room allotment"
+      ],
+      "keywords": ["hostel", "allotment", "allocation", "application", "room"],
+      "answer": "For hostel allocation and room allotment process details, begin at the Dean Office and then follow hostel administration instructions.",
+      "location_ids": ["dean-office", "block-a-hostel", "girls-hostel", "msc-hostel"],
+      "source_type": "office_confirmed",
+      "last_verified_at": "2026-02-09",
+      "follow_up": [
+        "Keep your admission details ready before applying for allotment."
+      ]
+    },
+    {
+      "id": "food_options",
+      "intent": "service_lookup",
+      "category": "hostel_and_food",
+      "question_patterns": [
+        "where can i eat",
+        "food on campus",
+        "canteen and mess"
+      ],
+      "keywords": ["food", "mess", "canteen", "snacks", "eat"],
+      "answer": "Campus Mess and Campus Canteen are the main food points, and Niraula Stores is useful for quick snacks and essentials.",
+      "location_ids": ["campus-mess", "campus-canteen", "niraula-stores"],
+      "source_type": "map_data",
+      "last_verified_at": "2026-02-09",
+      "follow_up": [
+        "Hostel residents should confirm mess timing directly with mess management."
+      ]
+    },
+    {
+      "id": "printing_stationery",
+      "intent": "service_lookup",
+      "category": "student_services",
+      "question_patterns": [
+        "where can i print documents",
+        "photocopy and print",
+        "stationery shop"
+      ],
+      "keywords": ["print", "photocopy", "binding", "stationery", "documents"],
+      "answer": "Om Stationery Store is the verified on-campus point for printing, photocopying, binding, and stationery purchases.",
+      "location_ids": ["om-stationery"],
+      "source_type": "map_data",
+      "last_verified_at": "2026-02-09",
+      "follow_up": [
+        "Visit with your soft copy ready to reduce waiting time."
+      ]
+    },
+    {
+      "id": "atm_locations",
+      "intent": "service_lookup",
+      "category": "student_services",
+      "question_patterns": [
+        "where is atm",
+        "cash withdrawal",
+        "bank atm"
+      ],
+      "keywords": ["atm", "cash", "withdraw", "nabil", "siddhartha"],
+      "answer": "Two verified ATM points are available: Nabil Bank ATM and Siddhartha Bank ATM.",
+      "location_ids": ["nabil-bank-atm", "siddhartha-bank-atm"],
+      "source_type": "map_data",
+      "last_verified_at": "2026-02-09",
+      "follow_up": [
+        "If one ATM is down, use the other nearby point."
+      ]
+    },
+    {
+      "id": "drinking_water",
+      "intent": "service_lookup",
+      "category": "student_services",
+      "question_patterns": [
+        "where can i get water",
+        "drinking water point",
+        "water machine"
+      ],
+      "keywords": ["water", "drinking", "refill", "vending"],
+      "answer": "You can use the Water Vending Machine and nearby public water tap points for drinking water access.",
+      "location_ids": ["water-vending-machine", "water-tap"],
+      "source_type": "map_data",
+      "last_verified_at": "2026-02-09",
+      "follow_up": [
+        "Carry your own bottle for regular refill use."
+      ]
+    },
+    {
+      "id": "toilets",
+      "intent": "service_lookup",
+      "category": "student_services",
+      "question_patterns": [
+        "where are toilets",
+        "restroom location",
+        "washroom location"
+      ],
+      "keywords": ["toilet", "washroom", "restroom", "changing room"],
+      "answer": "Public sanitation facilities are available at designated toilet blocks and changing-room toilet locations around campus.",
+      "location_ids": ["toilet-1", "changing-room-toilet"],
+      "source_type": "map_data",
+      "last_verified_at": "2026-02-09",
+      "follow_up": [
+        "Use the nearest marked sanitation point from map directions."
+      ]
+    },
+    {
+      "id": "clinic_help",
+      "intent": "service_lookup",
+      "category": "student_services",
+      "question_patterns": [
+        "medical help",
+        "where is clinic",
+        "first aid"
+      ],
+      "keywords": ["clinic", "health", "medical", "first aid", "sick"],
+      "answer": "FSU Clinic is the verified first-stop location for basic medical help and first-aid support on campus.",
+      "location_ids": ["fsu-clinic"],
+      "source_type": "office_confirmed",
+      "last_verified_at": "2026-02-09",
+      "follow_up": [
+        "For emergency-level conditions, seek immediate external emergency services."
+      ]
+    },
+    {
+      "id": "student_complaints",
+      "intent": "escalation",
+      "category": "escalation",
+      "question_patterns": [
+        "how to file complaint",
+        "student complaint office",
+        "where to complain"
+      ],
+      "keywords": ["complaint", "grievance", "issue", "report", "student union"],
+      "answer": "Student complaints and representation matters are handled by the FSU Office, with escalation support through campus administration when needed.",
+      "location_ids": ["fsu-office", "dean-office"],
+      "source_type": "office_confirmed",
+      "last_verified_at": "2026-02-09",
+      "follow_up": [
+        "Document your issue clearly before submitting a complaint."
+      ]
+    },
+    {
+      "id": "parking_guidance",
+      "intent": "service_lookup",
+      "category": "campus_navigation",
+      "question_patterns": [
+        "where to park",
+        "parking location",
+        "vehicle parking"
+      ],
+      "keywords": ["parking", "vehicle", "bike", "car"],
+      "answer": "Multiple parking zones are available inside campus for two-wheelers and four-wheelers, depending on your destination block.",
+      "location_ids": ["parking-1", "parking-2", "parking-3", "parking-4"],
+      "source_type": "map_data",
+      "last_verified_at": "2026-02-09",
+      "follow_up": [
+        "Use the nearest parking area to your destination block."
+      ]
+    },
+    {
+      "id": "entry_points",
+      "intent": "service_lookup",
+      "category": "campus_navigation",
+      "question_patterns": [
+        "campus gates",
+        "entrance points",
+        "main gate location"
+      ],
+      "keywords": ["entrance", "gate", "main entrance", "first entrance", "second entrance"],
+      "answer": "Pulchowk has Main Entrance plus additional First and Second Entrance points for easier access to different campus zones.",
+      "location_ids": ["main-entrance", "first-entrance", "second-entrance"],
+      "source_type": "map_data",
+      "last_verified_at": "2026-02-09",
+      "follow_up": [
+        "Choose the entrance nearest to your target building."
+      ]
+    },
+    {
+      "id": "library_or_department_restroom",
+      "intent": "service_lookup",
+      "category": "student_services",
+      "question_patterns": [
+        "toilet near library",
+        "washroom near department",
+        "restroom near electrical"
+      ],
+      "keywords": ["toilet near", "washroom near", "restroom near library", "electrical toilet"],
+      "answer": "If you are near Pulchowk Library or the Electrical department zone, use the nearest mapped restroom points shown on the campus map.",
+      "location_ids": ["pulchowk-library", "dept-electrical-electronics-computer", "toilet-1"],
+      "source_type": "map_data",
+      "last_verified_at": "2026-02-09",
+      "follow_up": [
+        "Ask nearby staff if a floor-specific restroom is temporarily unavailable."
+      ]
+    },
+    {
+      "id": "notice_source",
+      "intent": "policy_query",
+      "category": "notices_and_updates",
+      "question_patterns": [
+        "where to check official notices",
+        "notice source",
+        "exam notices source"
+      ],
+      "keywords": ["notice", "official notice", "exam notice", "update source"],
+      "answer": "Use the app's Notices section for aggregated updates, and verify critical exam-related updates against official campus and IOE exam notice channels.",
+      "location_ids": ["exam-control-office", "dean-office"],
+      "source_type": "office_confirmed",
+      "last_verified_at": "2026-02-09",
+      "follow_up": [
+        "For urgent academic consequences, confirm directly with Exam Control Office."
+      ]
+    },
+    {
+      "id": "notice_priority_for_new_students",
+      "intent": "policy_query",
+      "category": "notices_and_updates",
+      "question_patterns": [
+        "which notices are important for first year",
+        "important notices for new students",
+        "what notice category should i follow"
+      ],
+      "keywords": ["first year", "important notice", "admission notice", "exam notice", "registration notice"],
+      "answer": "New students should prioritize admission, registration, exam-form, and department routine notices, then follow hostel and student-service updates.",
+      "location_ids": ["dean-office", "exam-control-office"],
+      "source_type": "office_confirmed",
+      "last_verified_at": "2026-02-09",
+      "follow_up": [
+        "If a notice is unclear, verify it at the responsible office the same day."
+      ]
+    },
+    {
+      "id": "club_participation",
+      "intent": "process_howto",
+      "category": "student_organizations",
+      "question_patterns": [
+        "how to join clubs",
+        "student clubs participation",
+        "where can i join technical clubs"
+      ],
+      "keywords": ["club", "join", "student organization", "technical club", "participate"],
+      "answer": "You can explore technical and creative clubs such as Robotics Club, Electrical Club, Music Club, LOCUS Office, and SEDS Pulchowk.",
+      "location_ids": [
+        "robotics-club",
+        "electrical-club",
+        "music-club",
+        "locus-office",
+        "seds-pulchowk"
+      ],
+      "source_type": "map_data",
+      "last_verified_at": "2026-02-09",
+      "follow_up": [
+        "Visit club offices and ask for current recruitment or orientation sessions."
+      ]
+    },
+    {
+      "id": "sports_facilities",
+      "intent": "service_lookup",
+      "category": "student_life",
+      "question_patterns": [
+        "sports facilities",
+        "where to play",
+        "ground and court locations"
+      ],
+      "keywords": [
+        "football ground",
+        "cricket",
+        "basketball",
+        "volleyball",
+        "badminton",
+        "gym"
+      ],
+      "answer": "Campus sports facilities include football and cricket grounds, basketball and volleyball courts, badminton courts, gym hall, and outdoor calisthenics area.",
+      "location_ids": [
+        "football-ground",
+        "cricket-ground",
+        "basketball-court",
+        "volleyball-court",
+        "badminton-court-1",
+        "gym-hall",
+        "outdoor-gym"
+      ],
+      "source_type": "map_data",
+      "last_verified_at": "2026-02-09",
+      "follow_up": [
+        "Check event notices for sports timetable or tournament access."
+      ]
+    },
+    {
+      "id": "landmarks_for_orientation",
+      "intent": "service_lookup",
+      "category": "campus_navigation",
+      "question_patterns": [
+        "campus landmarks",
+        "famous places in campus",
+        "orientation landmarks"
+      ],
+      "keywords": ["landmark", "helicopter", "mandir", "bridge", "helm", "chautari"],
+      "answer": "Helpful campus landmarks include Helicopter Parking, PI Chautari, Saraswati Mandir, Suspension Bridge, and The Helm of IOE Pulchowk.",
+      "location_ids": [
+        "helicopter-parking",
+        "pi-chautari",
+        "saraswati-mandir",
+        "suspension-bridge",
+        "helm-of-ioe"
+      ],
+      "source_type": "map_data",
+      "last_verified_at": "2026-02-09",
+      "follow_up": [
+        "Use these landmarks for giving or following walking directions."
+      ]
+    },
+    {
+      "id": "urgent_exam_or_result_issue",
+      "intent": "escalation",
+      "category": "escalation",
+      "question_patterns": [
+        "urgent exam issue",
+        "result mismatch",
+        "admit card emergency"
+      ],
+      "keywords": ["urgent", "exam", "result mismatch", "admit card", "deadline"],
+      "answer": "For urgent exam or result issues, contact the Exam Control Office immediately and keep your supporting documents ready.",
+      "location_ids": ["exam-control-office"],
+      "source_type": "office_confirmed",
+      "last_verified_at": "2026-02-09",
+      "follow_up": [
+        "If unresolved, escalate through Dean Office with written details."
+      ]
+    },
+    {
+      "id": "urgent_admin_issue",
+      "intent": "escalation",
+      "category": "escalation",
+      "question_patterns": [
+        "urgent admin issue",
+        "administrative emergency",
+        "who to contact urgently in campus"
+      ],
+      "keywords": ["urgent", "administrative", "official", "approval", "dean"],
+      "answer": "For urgent administrative issues, Dean Office is the primary escalation point for institutional coordination.",
+      "location_ids": ["dean-office"],
+      "source_type": "office_confirmed",
+      "last_verified_at": "2026-02-09",
+      "follow_up": [
+        "Bring any supporting references, forms, or prior communication details."
+      ]
+    },
+    {
+      "id": "urgent_health_issue",
+      "intent": "escalation",
+      "category": "escalation",
+      "question_patterns": [
+        "health emergency",
+        "urgent medical help",
+        "sudden illness in campus"
+      ],
+      "keywords": ["health emergency", "medical emergency", "injury", "faint", "clinic urgent"],
+      "answer": "For immediate on-campus health support, go to FSU Clinic first and contact emergency medical services if the condition is serious.",
+      "location_ids": ["fsu-clinic"],
+      "source_type": "office_confirmed",
+      "last_verified_at": "2026-02-09",
+      "follow_up": [
+        "Do not delay emergency response for severe symptoms."
+      ]
+    },
+    {
+      "id": "engineering_labs_guidance",
+      "intent": "office_lookup",
+      "category": "academic_onboarding",
+      "question_patterns": [
+        "where are labs",
+        "engineering lab locations",
+        "which lab for practicals"
+      ],
+      "keywords": [
+        "lab",
+        "practical",
+        "hydro lab",
+        "hydraulic",
+        "high voltage",
+        "machine workshop",
+        "material testing"
+      ],
+      "answer": "Major practical facilities include Hydro Lab, Hydraulic Lab, High Voltage Lab, Machine Workshop, and Central Material Testing Laboratory.",
+      "location_ids": [
+        "hydro-lab",
+        "hydraulic-lab",
+        "high-voltage-lab",
+        "machine-workshop",
+        "cmtl"
+      ],
+      "source_type": "map_data",
+      "last_verified_at": "2026-02-09",
+      "follow_up": [
+        "Confirm your specific lab room and schedule from your department."
+      ]
+    },
+    {
+      "id": "energy_and_research_units",
+      "intent": "office_lookup",
+      "category": "academic_onboarding",
+      "question_patterns": [
+        "energy studies center",
+        "research units in campus",
+        "where is continuing education center"
+      ],
+      "keywords": [
+        "energy studies",
+        "research center",
+        "continuing education",
+        "cids"
+      ],
+      "answer": "Key academic support units include Center for Energy Studies, Continuing Education Center, and CIDS for specialized programs and coordination.",
+      "location_ids": ["center-energy-studies", "continuing-education", "cids"],
+      "source_type": "official_page",
+      "last_verified_at": "2026-02-09",
+      "follow_up": [
+        "Visit the respective office for current program availability."
+      ]
+    },
+    {
+      "id": "student_union_and_support_groups",
+      "intent": "office_lookup",
+      "category": "student_organizations",
+      "question_patterns": [
+        "student union office",
+        "student support groups",
+        "where is ntbns"
+      ],
+      "keywords": ["fsu", "student union", "ntbns", "pulchowk girls", "asa office"],
+      "answer": "Student support and representation spaces include FSU Office, NTBNS, Pulchowk Girls support point, and ASA Office.",
+      "location_ids": ["fsu-office", "ntbns", "pulchowk-girls", "asa-office"],
+      "source_type": "map_data",
+      "last_verified_at": "2026-02-09",
+      "follow_up": [
+        "Use these offices for student coordination, welfare, and peer support."
+      ]
+    },
+    {
+      "id": "class_block_guidance",
+      "intent": "service_lookup",
+      "category": "academic_onboarding",
+      "question_patterns": [
+        "where are block d e f g",
+        "class blocks",
+        "academic blocks"
+      ],
+      "keywords": ["block d", "block e", "block f", "block g", "class block"],
+      "answer": "Core academic blocks are D, E, F, and G blocks, with separate departmental and lab zones across the campus.",
+      "location_ids": ["d-block", "e-block", "f-block", "g-block"],
+      "source_type": "map_data",
+      "last_verified_at": "2026-02-09",
+      "follow_up": [
+        "Use map search with your class block name before heading to class."
+      ]
+    },
+    {
+      "id": "daily_essentials_near_hostel",
+      "intent": "service_lookup",
+      "category": "student_services",
+      "question_patterns": [
+        "essentials near hostel",
+        "snacks near hostel",
+        "where is niraula stores"
+      ],
+      "keywords": ["niraula", "snacks", "essentials", "store", "hostel area"],
+      "answer": "Niraula Stores is a convenient point for quick essentials and snacks, especially useful near hostel and student movement areas.",
+      "location_ids": ["niraula-stores"],
+      "source_type": "map_data",
+      "last_verified_at": "2026-02-09",
+      "follow_up": [
+        "For printing or stationery, use Om Stationery Store."
+      ]
+    },
+    {
+      "id": "map_navigation_help",
+      "intent": "service_lookup",
+      "category": "campus_navigation",
+      "question_patterns": [
+        "how to use map bot",
+        "how to get directions in app",
+        "show route help"
+      ],
+      "keywords": ["directions", "route", "navigate", "from", "to", "map"],
+      "answer": "Ask in natural language, for example: 'Show me directions from Pulchowk Library to Campus Mess' or 'Where is Exam Control Office?'.",
+      "location_ids": ["pulchowk-library", "campus-mess", "exam-control-office"],
+      "source_type": "map_data",
+      "last_verified_at": "2026-02-09",
+      "follow_up": [
+        "Use exact building names for the fastest and most accurate routing."
+      ]
+    },
+    {
+      "id": "unverified_deadline_warning",
+      "intent": "deadline_query",
+      "category": "notices_and_updates",
+      "question_patterns": [
+        "exact deadline",
+        "deadline today",
+        "registration deadline today"
+      ],
+      "keywords": ["deadline", "today", "last date", "due date", "closing date"],
+      "answer": "Exact deadlines can change quickly. Please verify the latest official notice and confirm with the responsible office before acting.",
+      "location_ids": ["dean-office", "exam-control-office"],
+      "source_type": "office_confirmed",
+      "last_verified_at": "2026-02-09",
+      "follow_up": [
+        "Always cross-check same-day deadline details from official notices."
+      ]
+    }
+  ],
+  "fallbacks": {
+    "general": {
+      "message": "I do not have a verified answer for that yet. Please verify through the Dean Office or official notices before taking action.",
+      "location_ids": ["dean-office"],
+      "follow_up": [
+        "You can ask me route questions like 'from Pulchowk Library to Exam Control Office'."
+      ]
+    },
+    "deadline_query": {
+      "message": "I cannot confirm that deadline from verified data right now. Please verify from official notices and the responsible office.",
+      "location_ids": ["exam-control-office", "dean-office"],
+      "follow_up": [
+        "Use official notice channels for same-day deadline decisions."
+      ]
+    },
+    "escalation": {
+      "message": "For urgent campus issues, contact the relevant office immediately. If unsure, start at Dean Office for official escalation guidance.",
+      "location_ids": ["dean-office"],
+      "follow_up": [
+        "For urgent medical cases, go to FSU Clinic and seek emergency services as needed."
+      ]
+    }
+  }
+}

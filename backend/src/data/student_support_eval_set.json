@@ -1,0 +1,96 @@
+{
+  "version": "2026-02-09",
+  "language": "en",
+  "groups": [
+    {
+      "category": "admissions_onboarding",
+      "queries": [
+        "What documents do I need for admission?",
+        "Where should I go for admission queries?",
+        "How do newly admitted students start first semester?",
+        "Which office handles enrollment confusion?",
+        "I lost my student ID, what should I do?"
+      ]
+    },
+    {
+      "category": "registration_and_records",
+      "queries": [
+        "How do I handle exam form issues?",
+        "Which office handles admit card problems?",
+        "Where can I ask about transcript collection?",
+        "Where should I ask for exam result correction?",
+        "Who handles semester registration problems?"
+      ]
+    },
+    {
+      "category": "library",
+      "queries": [
+        "What are the library hours?",
+        "How can I get library membership?",
+        "Where is Pulchowk Library?",
+        "Where can I study quietly on campus?",
+        "How do borrowing and renewal work in library?"
+      ]
+    },
+    {
+      "category": "hostel_and_food",
+      "queries": [
+        "Where are boys hostels?",
+        "Where is girls hostel located?",
+        "Where is MSC hostel?",
+        "Where can I find canteen and mess?",
+        "Who should I contact for hostel allocation?"
+      ]
+    },
+    {
+      "category": "student_services",
+      "queries": [
+        "Where is the clinic in Pulchowk campus?",
+        "Where can I find ATM on campus?",
+        "Where can I print and photocopy documents?",
+        "Where is Niraula Stores?",
+        "Where can I find drinking water points?"
+      ]
+    },
+    {
+      "category": "notices_and_deadlines",
+      "queries": [
+        "How do I confirm exam deadline updates?",
+        "Where do official notices come from?",
+        "Which notice category matters for first year students?",
+        "I need fee deadline details",
+        "How should I verify urgent deadline changes?"
+      ]
+    },
+    {
+      "category": "student_organizations",
+      "queries": [
+        "Where is FSU office?",
+        "Where is LOCUS office?",
+        "Where is Robotics Club?",
+        "How can I find student clubs to join?",
+        "Where is Electrical Club?"
+      ]
+    },
+    {
+      "category": "navigation_and_route",
+      "queries": [
+        "Show me directions from Pulchowk Library to Campus Mess",
+        "How to go from Dean Office to Exam Control Office?",
+        "Navigate from Civil Department to FSU Clinic",
+        "Where is exam control office?",
+        "Find campus canteen location"
+      ]
+    },
+    {
+      "category": "emergency_and_escalation",
+      "queries": [
+        "I have an urgent health issue, where should I go?",
+        "How do I report harassment on campus?",
+        "I need immediate administrative help, where to go?",
+        "Where do I file a serious complaint?",
+        "Who can help if I am lost and need official support?"
+      ]
+    }
+  ]
+}
