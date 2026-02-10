@@ -179,9 +179,16 @@
       const sellerId = bookQuery.data?.sellerId;
       if (!sellerId) return null;
       const result = await getBookListings({ sellerId });
-      return result.success
-        ? (result.data?.listings || []).filter((l) => l.id !== bookId)
-        : [];
+      if (!result.success || !result.data) return { listings: [], totalCount: 0 };
+
+      const listings = (result.data?.listings || []).filter(
+        (l) => l.id !== bookId,
+      );
+
+      return {
+        listings,
+        totalCount: listings.length,
+      };
     },
     enabled: !!bookQuery.data?.sellerId && profileModalOpen,
   }));
@@ -2204,7 +2211,7 @@
               Listed
             </p>
             <p class="mt-1 text-xl font-black text-gray-900">
-              {sellerListingsQuery.data?.length || 0}
+              {sellerListingsQuery.data?.totalCount || 0}
             </p>
           </div>
           <div
@@ -2267,9 +2274,9 @@
 
           <div class="mt-6">
             {#if profileTab === "listings"}
-              {#if sellerListingsQuery.data && sellerListingsQuery.data.length > 0}
+              {#if sellerListingsQuery.data?.listings && sellerListingsQuery.data.listings.length > 0}
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {#each sellerListingsQuery.data as item}
+                  {#each sellerListingsQuery.data.listings as item}
                     <a
                       href="/books/{item.id}"
                       class="group bg-slate-50/50 p-3 rounded-2xl border border-slate-100 hover:border-indigo-200 transition-all"
