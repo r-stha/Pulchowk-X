@@ -1,10 +1,10 @@
 ﻿<script lang="ts">
-  import { onMount, untrack } from "svelte";
+  import { onMount, untrack } from 'svelte'
   import {
     route as routeAction,
     goto,
     query as routeQuery,
-  } from "@mateothegreat/svelte5-router";
+  } from '@mateothegreat/svelte5-router'
   import {
     getBookListingById,
     saveBook,
@@ -27,230 +27,230 @@
     type BookListing,
     type MarketplaceReport,
     type PurchaseRequest,
-  } from "../lib/api";
-  import LoadingSpinner from "../components/LoadingSpinner.svelte";
-  import { fade, fly } from "svelte/transition";
-  import { quintOut } from "svelte/easing";
-  import { authClient } from "../lib/auth-client";
-  import { createQuery, useQueryClient } from "@tanstack/svelte-query";
+  } from '../lib/api'
+  import LoadingSpinner from '../components/LoadingSpinner.svelte'
+  import { fade, fly } from 'svelte/transition'
+  import { quintOut } from 'svelte/easing'
+  import { authClient } from '../lib/auth-client'
+  import { createQuery, useQueryClient } from '@tanstack/svelte-query'
 
-  const { route } = $props();
-  const bookId = $derived(parseInt(route.result.path.params.bookId) || 0);
+  const { route } = $props()
+  const bookId = $derived(parseInt(route.result.path.params.bookId) || 0)
 
-  const session = authClient.useSession();
-  const queryClient = useQueryClient();
+  const session = authClient.useSession()
+  const queryClient = useQueryClient()
 
-  let hasRedirectedToLogin = $state(false);
-  let activeImageIndex = $state(0);
-  let saving = $state(false);
-  let deleting = $state(false);
-  let markingSold = $state(false);
-  let savedState = $state(false);
-  let ratingValue = $state(5);
-  let ratingReview = $state("");
-  let ratingSubmitting = $state(false);
-  let reportCategory = $state<MarketplaceReport["category"]>("other");
-  let reportDescription = $state("");
-  let reportSubmitting = $state(false);
-  let blockReason = $state("");
-  let blockSubmitting = $state(false);
-  let unblockSubmitting = $state(false);
-  let trustFeedback = $state<string | null>(null);
-  let trustError = $state<string | null>(null);
-  let toastTimeout: any;
-  let highlightListing = $state(routeQuery("highlight") === "listing");
+  let hasRedirectedToLogin = $state(false)
+  let activeImageIndex = $state(0)
+  let saving = $state(false)
+  let deleting = $state(false)
+  let markingSold = $state(false)
+  let savedState = $state(false)
+  let ratingValue = $state(5)
+  let ratingReview = $state('')
+  let ratingSubmitting = $state(false)
+  let reportCategory = $state<MarketplaceReport['category']>('other')
+  let reportDescription = $state('')
+  let reportSubmitting = $state(false)
+  let blockReason = $state('')
+  let blockSubmitting = $state(false)
+  let unblockSubmitting = $state(false)
+  let trustFeedback = $state<string | null>(null)
+  let trustError = $state<string | null>(null)
+  let toastTimeout: any
+  let highlightListing = $state(routeQuery('highlight') === 'listing')
 
   // Modal States
-  let requestToBuyModalOpen = $state(false);
-  let reviewsModalOpen = $state(false);
-  let rateModalOpen = $state(false);
-  let reportModalOpen = $state(false);
-  let blockModalOpen = $state(false);
-  let profileModalOpen = $state(false);
-  let sellerMenuOpen = $state(false);
+  let requestToBuyModalOpen = $state(false)
+  let reviewsModalOpen = $state(false)
+  let rateModalOpen = $state(false)
+  let reportModalOpen = $state(false)
+  let blockModalOpen = $state(false)
+  let profileModalOpen = $state(false)
+  let sellerMenuOpen = $state(false)
 
-  let requestMessage = $state("");
-  let requestSubmitting = $state(false);
-  let cancellingRequest = $state(false);
-  let respondingToRequest = $state<number | null>(null);
+  let requestMessage = $state('')
+  let requestSubmitting = $state(false)
+  let cancellingRequest = $state(false)
+  let respondingToRequest = $state<number | null>(null)
 
-  let showStickyBar = $state(false);
-  let ctaRef: HTMLElement | undefined = $state(undefined);
-  let profileTab = $state<"listings" | "reviews">("listings");
-  let ratingTags = $state<string[]>([]);
+  let showStickyBar = $state(false)
+  let ctaRef: HTMLElement | undefined = $state(undefined)
+  let profileTab = $state<'listings' | 'reviews'>('listings')
+  let ratingTags = $state<string[]>([])
 
   const availableRatingTags = [
-    "Fast Response",
-    "Accurate Description",
-    "Great Condition",
-    "Fair Price",
-    "Professional",
-  ];
+    'Fast Response',
+    'Accurate Description',
+    'Great Condition',
+    'Fair Price',
+    'Professional',
+  ]
 
   function toggleRatingTag(tag: string) {
     if (ratingTags.includes(tag)) {
-      ratingTags = ratingTags.filter((t) => t !== tag);
+      ratingTags = ratingTags.filter((t) => t !== tag)
     } else {
-      ratingTags = [...ratingTags, tag];
+      ratingTags = [...ratingTags, tag]
     }
   }
 
   function showSuccess(message: string) {
-    if (toastTimeout) clearTimeout(toastTimeout);
-    trustFeedback = message;
-    trustError = null;
+    if (toastTimeout) clearTimeout(toastTimeout)
+    trustFeedback = message
+    trustError = null
     toastTimeout = setTimeout(() => {
-      trustFeedback = null;
-    }, 2000);
+      trustFeedback = null
+    }, 2000)
   }
 
   function showError(message: string) {
-    if (toastTimeout) clearTimeout(toastTimeout);
-    trustError = message;
-    trustFeedback = null;
+    if (toastTimeout) clearTimeout(toastTimeout)
+    trustError = message
+    trustFeedback = null
     toastTimeout = setTimeout(() => {
-      trustError = null;
-    }, 2000);
+      trustError = null
+    }, 2000)
   }
 
   async function handleShare() {
     try {
-      await navigator.clipboard.writeText(window.location.href);
-      showSuccess("Link copied to clipboard!");
+      await navigator.clipboard.writeText(window.location.href)
+      showSuccess('Link copied to clipboard!')
     } catch (error: any) {
-      showError(error.message);
+      showError(error.message)
     }
   }
 
   onMount(() => {
-    window.scrollTo(0, 0);
-  });
+    window.scrollTo(0, 0)
+  })
 
   $effect(() => {
-    if (!ctaRef) return;
+    if (!ctaRef) return
     const observer = new IntersectionObserver(
       ([entry]) => {
-        showStickyBar = !entry.isIntersecting;
+        showStickyBar = !entry.isIntersecting
       },
       { threshold: 0 },
-    );
-    observer.observe(ctaRef);
-    return () => observer.disconnect();
-  });
+    )
+    observer.observe(ctaRef)
+    return () => observer.disconnect()
+  })
 
   $effect(() => {
-    if (hasRedirectedToLogin) return;
+    if (hasRedirectedToLogin) return
 
     if (!$session.isPending && !$session.error && !$session.data?.user) {
-      hasRedirectedToLogin = true;
+      hasRedirectedToLogin = true
       untrack(() => {
-        goto("/register?message=login_required");
-      });
+        goto('/register?message=login_required')
+      })
     }
-  });
+  })
 
   $effect(() => {
-    if (!sellerMenuOpen) return;
+    if (!sellerMenuOpen) return
     const handleOutsideClick = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
-      if (!target.closest(".seller-menu-container")) {
-        sellerMenuOpen = false;
+      const target = e.target as HTMLElement
+      if (!target.closest('.seller-menu-container')) {
+        sellerMenuOpen = false
       }
-    };
-    window.addEventListener("click", handleOutsideClick);
-    return () => window.removeEventListener("click", handleOutsideClick);
-  });
+    }
+    window.addEventListener('click', handleOutsideClick)
+    return () => window.removeEventListener('click', handleOutsideClick)
+  })
 
   const bookQuery = createQuery(() => ({
-    queryKey: ["book-listing", bookId],
+    queryKey: ['book-listing', bookId],
     queryFn: async () => {
-      if (!bookId) throw new Error("Invalid book ID");
-      const result = await getBookListingById(bookId);
+      if (!bookId) throw new Error('Invalid book ID')
+      const result = await getBookListingById(bookId)
       if (result.success && result.data) {
-        savedState = result.data.isSaved || false;
-        return result.data;
+        savedState = result.data.isSaved || false
+        return result.data
       }
-      throw new Error(result.message || "Failed to load listing");
+      throw new Error(result.message || 'Failed to load listing')
     },
     enabled: bookId > 0,
-  }));
+  }))
 
   const sellerReputationQuery = createQuery(() => ({
-    queryKey: ["seller-reputation", bookQuery.data?.sellerId],
+    queryKey: ['seller-reputation', bookQuery.data?.sellerId],
     queryFn: async () => {
-      const sellerId = bookQuery.data?.sellerId;
-      if (!sellerId) throw new Error("Missing seller");
-      const result = await getSellerReputation(sellerId);
-      if (result.success && result.data) return result.data;
-      throw new Error(result.message || "Could not load seller rating");
+      const sellerId = bookQuery.data?.sellerId
+      if (!sellerId) throw new Error('Missing seller')
+      const result = await getSellerReputation(sellerId)
+      if (result.success && result.data) return result.data
+      throw new Error(result.message || 'Could not load seller rating')
     },
     enabled: !!bookQuery.data?.sellerId && !!$session.data?.user,
-  }));
+  }))
 
   const sellerListingsQuery = createQuery(() => ({
-    queryKey: ["seller-listings", bookQuery.data?.sellerId, bookId],
+    queryKey: ['seller-listings', bookQuery.data?.sellerId, bookId],
     queryFn: async () => {
-      const sellerId = bookQuery.data?.sellerId;
-      if (!sellerId) return null;
-      const result = await getBookListings({ sellerId });
+      const sellerId = bookQuery.data?.sellerId
+      if (!sellerId) return null
+      const result = await getBookListings({ sellerId })
       if (!result.success || !result.data)
-        return { listings: [], totalCount: 0 };
+        return { listings: [], totalCount: 0 }
 
       const listings = (result.data?.listings || []).filter(
         (l) => l.id !== bookId,
-      );
+      )
 
       return {
         listings,
         totalCount: listings.length,
-      };
+      }
     },
     enabled: !!bookQuery.data?.sellerId && profileModalOpen,
-  }));
+  }))
 
   const blockedUsersQuery = createQuery(() => ({
-    queryKey: ["blocked-marketplace-users"],
+    queryKey: ['blocked-marketplace-users'],
     queryFn: async () => {
-      const result = await getBlockedMarketplaceUsers();
-      if (result.success && result.data) return result.data;
-      throw new Error(result.message || "Could not load blocked users");
+      const result = await getBlockedMarketplaceUsers()
+      if (result.success && result.data) return result.data
+      throw new Error(result.message || 'Could not load blocked users')
     },
     enabled: !!$session.data?.user,
-  }));
+  }))
 
   const purchaseRequestQuery = createQuery(() => ({
-    queryKey: ["purchase-request", bookId, bookQuery.data?.isOwner],
+    queryKey: ['purchase-request', bookId, bookQuery.data?.isOwner],
     queryFn: async () => {
-      if (!bookId || !$session.data?.user) return null;
+      if (!bookId || !$session.data?.user) return null
       if (bookQuery.data?.isOwner) {
-        const result = await getListingPurchaseRequests(bookId);
-        return result.success ? result.data : [];
+        const result = await getListingPurchaseRequests(bookId)
+        return result.success ? result.data : []
       }
-      const result = await getPurchaseRequestStatus(bookId);
-      return result.success ? result.data : null;
+      const result = await getPurchaseRequestStatus(bookId)
+      return result.success ? result.data : null
     },
     enabled: bookId > 0 && !!$session.data?.user && !!bookQuery.data,
-  }));
+  }))
 
   const buyerPurchaseRequest = $derived(
     !bookQuery.data?.isOwner && !Array.isArray(purchaseRequestQuery.data)
       ? (purchaseRequestQuery.data as PurchaseRequest | null)
       : null,
-  );
+  )
 
   const sellerContactQuery = createQuery(() => ({
-    queryKey: ["seller-contact", bookId],
+    queryKey: ['seller-contact', bookId],
     queryFn: async () => {
-      if (!bookId || !$session.data?.user) return null;
-      const result = await getSellerContactInfo(bookId);
-      if (result.success) return result.data;
-      return null;
+      if (!bookId || !$session.data?.user) return null
+      const result = await getSellerContactInfo(bookId)
+      if (result.success) return result.data
+      return null
     },
     enabled:
       bookId > 0 &&
       !!$session.data?.user &&
-      (buyerPurchaseRequest?.status === "accepted" || bookQuery.data?.isOwner),
-  }));
+      (buyerPurchaseRequest?.status === 'accepted' || bookQuery.data?.isOwner),
+  }))
 
   const hasSellerContactInfo = $derived(
     !!sellerContactQuery.data &&
@@ -260,363 +260,360 @@
         !!sellerContactQuery.data.email ||
         !!sellerContactQuery.data.phoneNumber ||
         !!sellerContactQuery.data.otherContactDetails),
-  );
+  )
 
   $effect(() => {
-    const total = bookQuery.data?.images?.length || 0;
+    const total = bookQuery.data?.images?.length || 0
     if (total === 0) {
-      activeImageIndex = 0;
-      return;
+      activeImageIndex = 0
+      return
     }
-    if (activeImageIndex > total - 1) activeImageIndex = 0;
-  });
+    if (activeImageIndex > total - 1) activeImageIndex = 0
+  })
 
-  const book = $derived(bookQuery.data);
+  const book = $derived(bookQuery.data)
 
-  const conditionLabel: Record<BookListing["condition"], string> = {
-    new: "New",
-    like_new: "Like New",
-    good: "Good",
-    fair: "Fair",
-    poor: "Poor",
-  };
+  const conditionLabel: Record<BookListing['condition'], string> = {
+    new: 'New',
+    like_new: 'Like New',
+    good: 'Good',
+    fair: 'Fair',
+    poor: 'Poor',
+  }
 
-  const conditionTone: Record<BookListing["condition"], string> = {
-    new: "bg-emerald-100 text-emerald-700 border-emerald-200",
-    like_new: "bg-blue-100 text-blue-700 border-blue-200",
-    good: "bg-amber-100 text-amber-700 border-amber-200",
-    fair: "bg-orange-100 text-orange-700 border-orange-200",
-    poor: "bg-rose-100 text-rose-700 border-rose-200",
-  };
+  const conditionTone: Record<BookListing['condition'], string> = {
+    new: 'bg-emerald-100 text-emerald-700 border-emerald-200',
+    like_new: 'bg-blue-100 text-blue-700 border-blue-200',
+    good: 'bg-amber-100 text-amber-700 border-amber-200',
+    fair: 'bg-orange-100 text-orange-700 border-orange-200',
+    poor: 'bg-rose-100 text-rose-700 border-rose-200',
+  }
 
   function formatPrice(price: string) {
-    return `Rs. ${parseFloat(price).toLocaleString()}`;
+    return `Rs. ${parseFloat(price).toLocaleString()}`
   }
 
   function formatDate(dateStr: string) {
-    return new Date(dateStr).toLocaleDateString("en-US", {
-      month: "long",
-      day: "numeric",
-      year: "numeric",
-    });
+    return new Date(dateStr).toLocaleDateString('en-US', {
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric',
+    })
   }
 
   function clearTrustMessages() {
-    if (toastTimeout) clearTimeout(toastTimeout);
-    trustFeedback = null;
-    trustError = null;
+    if (toastTimeout) clearTimeout(toastTimeout)
+    trustFeedback = null
+    trustError = null
   }
 
   async function handleSaveToggle() {
-    if (!bookQuery.data || !$session.data?.user || saving) return;
+    if (!bookQuery.data || !$session.data?.user || saving) return
 
-    const previous = savedState;
-    savedState = !savedState;
-    saving = true;
+    const previous = savedState
+    savedState = !savedState
+    saving = true
 
     try {
-      if (previous) await unsaveBook(bookId);
-      else await saveBook(bookId);
+      if (previous) await unsaveBook(bookId)
+      else await saveBook(bookId)
 
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["book-listing", bookId] }),
-        queryClient.invalidateQueries({ queryKey: ["saved-books"] }),
-      ]);
+        queryClient.invalidateQueries({ queryKey: ['book-listing', bookId] }),
+        queryClient.invalidateQueries({ queryKey: ['saved-books'] }),
+      ])
     } catch (error) {
-      console.error("Failed to toggle saved state:", error);
-      savedState = previous;
+      console.error('Failed to toggle saved state:', error)
+      savedState = previous
     } finally {
-      saving = false;
+      saving = false
     }
   }
 
   async function handleDelete() {
-    if (!confirm("Delete this listing permanently?")) return;
+    if (!confirm('Delete this listing permanently?')) return
 
-    deleting = true;
+    deleting = true
     try {
-      const result = await deleteBookListing(bookId);
+      const result = await deleteBookListing(bookId)
       if (result.success) {
-        goto("/books");
+        goto('/books')
       } else {
-        alert(result.message || "Could not delete listing.");
+        alert(result.message || 'Could not delete listing.')
       }
     } catch (error) {
-      console.error("Failed to delete listing:", error);
+      console.error('Failed to delete listing:', error)
     } finally {
-      deleting = false;
+      deleting = false
     }
   }
 
   async function handleMarkSold() {
-    if (!confirm("Mark this listing as sold?")) return;
+    if (!confirm('Mark this listing as sold?')) return
 
-    markingSold = true;
+    markingSold = true
     try {
-      const result = await markBookAsSold(bookId);
+      const result = await markBookAsSold(bookId)
       if (result.success) {
         await queryClient.invalidateQueries({
-          queryKey: ["book-listing", bookId],
-        });
-        await Promise.all([
-          bookQuery.refetch(),
-          purchaseRequestQuery.refetch(),
-        ]);
+          queryKey: ['book-listing', bookId],
+        })
+        await Promise.all([bookQuery.refetch(), purchaseRequestQuery.refetch()])
       } else {
-        alert(result.message || "Could not mark as sold.");
+        alert(result.message || 'Could not mark as sold.')
       }
     } catch (error) {
-      console.error("Failed to mark sold:", error);
+      console.error('Failed to mark sold:', error)
     } finally {
-      markingSold = false;
+      markingSold = false
     }
   }
 
   async function handleRateSeller(book: BookListing) {
-    if (!book.sellerId || ratingSubmitting) return;
+    if (!book.sellerId || ratingSubmitting) return
     if (ratingValue < 1 || ratingValue > 5) {
-      showError("Please choose a rating between 1 and 5.");
-      return;
+      showError('Please choose a rating between 1 and 5.')
+      return
     }
 
-    clearTrustMessages();
-    ratingSubmitting = true;
+    clearTrustMessages()
+    ratingSubmitting = true
     try {
       const combinedReview = [
-        ratingTags.length > 0 ? `${ratingTags.join(", ")}` : "",
+        ratingTags.length > 0 ? `${ratingTags.join(', ')}` : '',
         ratingReview.trim(),
       ]
         .filter(Boolean)
-        .join(" - ");
+        .join(' - ')
 
       const result = await rateSeller(book.sellerId, {
         listingId: book.id,
         rating: ratingValue,
         review: combinedReview || undefined,
-      });
+      })
       if (!result.success) {
-        showError(result.message || "Could not submit rating.");
-        return;
+        showError(result.message || 'Could not submit rating.')
+        return
       }
 
-      ratingReview = "";
-      showSuccess("Rating submitted.");
+      ratingReview = ''
+      showSuccess('Rating submitted.')
       await queryClient.invalidateQueries({
-        queryKey: ["seller-reputation", book.sellerId],
-      });
-      await sellerReputationQuery.refetch();
+        queryKey: ['seller-reputation', book.sellerId],
+      })
+      await sellerReputationQuery.refetch()
     } catch (error) {
-      console.error("Failed to rate seller:", error);
-      showError("Could not submit rating.");
+      console.error('Failed to rate seller:', error)
+      showError('Could not submit rating.')
     } finally {
-      ratingSubmitting = false;
+      ratingSubmitting = false
     }
   }
 
   async function handleReportSeller(book: BookListing) {
-    if (!book.sellerId || reportSubmitting) return;
+    if (!book.sellerId || reportSubmitting) return
     if (!reportDescription.trim()) {
-      showError("Please add a short description for the report.");
-      return;
+      showError('Please add a short description for the report.')
+      return
     }
 
-    clearTrustMessages();
-    reportSubmitting = true;
+    clearTrustMessages()
+    reportSubmitting = true
     try {
       const result = await createMarketplaceReport({
         reportedUserId: book.sellerId,
         listingId: book.id,
         category: reportCategory,
         description: reportDescription.trim(),
-      });
+      })
       if (!result.success) {
-        showError(result.message || "Could not submit report.");
-        return;
+        showError(result.message || 'Could not submit report.')
+        return
       }
 
-      reportDescription = "";
-      reportCategory = "other";
-      showSuccess("Report submitted. Admins will review it.");
+      reportDescription = ''
+      reportCategory = 'other'
+      showSuccess('Report submitted. Admins will review it.')
     } catch (error) {
-      console.error("Failed to report seller:", error);
-      showError("Could not submit report.");
+      console.error('Failed to report seller:', error)
+      showError('Could not submit report.')
     } finally {
-      reportSubmitting = false;
+      reportSubmitting = false
     }
   }
 
   async function handleBlockSeller(book: BookListing) {
-    if (!book.sellerId || blockSubmitting) return;
+    if (!book.sellerId || blockSubmitting) return
     if (
       !confirm(
-        "Block this seller? You will not see their marketplace activity.",
+        'Block this seller? You will not see their marketplace activity.',
       )
     )
-      return;
+      return
 
-    clearTrustMessages();
-    blockSubmitting = true;
+    clearTrustMessages()
+    blockSubmitting = true
     try {
       const result = await blockMarketplaceUser(
         book.sellerId,
         blockReason.trim() || undefined,
-      );
+      )
       if (!result.success) {
-        showError(result.message || "Could not block seller.");
-        return;
+        showError(result.message || 'Could not block seller.')
+        return
       }
 
-      blockReason = "";
-      showSuccess("Seller blocked.");
-      await blockedUsersQuery.refetch();
+      blockReason = ''
+      showSuccess('Seller blocked.')
+      await blockedUsersQuery.refetch()
     } catch (error) {
-      console.error("Failed to block seller:", error);
-      showError("Could not block seller.");
+      console.error('Failed to block seller:', error)
+      showError('Could not block seller.')
     } finally {
-      blockSubmitting = false;
+      blockSubmitting = false
     }
   }
 
   async function handleRequestToBuy() {
-    if (!bookId || requestSubmitting) return;
-    requestSubmitting = true;
+    if (!bookId || requestSubmitting) return
+    requestSubmitting = true
     try {
       const result = await createPurchaseRequest(
         bookId,
         requestMessage.trim() || undefined,
-      );
+      )
       if (result.success) {
-        requestToBuyModalOpen = false;
-        requestMessage = "";
-        await purchaseRequestQuery.refetch();
+        requestToBuyModalOpen = false
+        requestMessage = ''
+        await purchaseRequestQuery.refetch()
       } else {
-        showError(result.message || "Failed to send request.");
+        showError(result.message || 'Failed to send request.')
       }
     } catch (error) {
-      console.error("Failed to send purchase request:", error);
-      showError("An error occurred while sending the request.");
+      console.error('Failed to send purchase request:', error)
+      showError('An error occurred while sending the request.')
     } finally {
-      requestSubmitting = false;
+      requestSubmitting = false
     }
   }
 
   async function handleCancelRequest() {
-    const data = purchaseRequestQuery.data;
-    if (!data || Array.isArray(data) || cancellingRequest) return;
-    const request = data;
-    if (!confirm("Cancel your request to buy this book?")) return;
+    const data = purchaseRequestQuery.data
+    if (!data || Array.isArray(data) || cancellingRequest) return
+    const request = data
+    if (!confirm('Cancel your request to buy this book?')) return
 
-    cancellingRequest = true;
+    cancellingRequest = true
     try {
-      const result = await cancelPurchaseRequest(request.id);
+      const result = await cancelPurchaseRequest(request.id)
       if (result.success) {
-        await purchaseRequestQuery.refetch();
+        await purchaseRequestQuery.refetch()
       } else {
-        showError(result.message || "Failed to cancel request.");
+        showError(result.message || 'Failed to cancel request.')
       }
     } catch (error) {
-      console.error("Failed to cancel purchase request:", error);
-      showError("An error occurred while cancelling the request.");
+      console.error('Failed to cancel purchase request:', error)
+      showError('An error occurred while cancelling the request.')
     } finally {
-      cancellingRequest = false;
+      cancellingRequest = false
     }
   }
 
   async function handleRespondToRequest(requestId: number, accept: boolean) {
-    if (respondingToRequest) return;
-    respondingToRequest = requestId;
+    if (respondingToRequest) return
+    respondingToRequest = requestId
     try {
-      const result = await respondToPurchaseRequest(requestId, accept);
+      const result = await respondToPurchaseRequest(requestId, accept)
       if (result.success) {
-        await purchaseRequestQuery.refetch();
-        showSuccess(accept ? "Request accepted!" : "Request declined.");
+        await purchaseRequestQuery.refetch()
+        showSuccess(accept ? 'Request accepted!' : 'Request declined.')
       } else {
-        showError(result.message || "Failed to respond to request.");
+        showError(result.message || 'Failed to respond to request.')
       }
     } catch (err) {
-      console.error("Failed to respond to request:", err);
-      showError("An error occurred.");
+      console.error('Failed to respond to request:', err)
+      showError('An error occurred.')
     } finally {
-      respondingToRequest = null;
+      respondingToRequest = null
     }
   }
 
   function getStatusLabel(status: string) {
     switch (status) {
-      case "requested":
-        return "Pending";
-      case "accepted":
-        return "Accepted";
-      case "rejected":
-        return "Rejected";
-      case "completed":
-        return "Completed";
-      case "cancelled":
-        return "Cancelled";
+      case 'requested':
+        return 'Pending'
+      case 'accepted':
+        return 'Accepted'
+      case 'rejected':
+        return 'Rejected'
+      case 'completed':
+        return 'Completed'
+      case 'cancelled':
+        return 'Cancelled'
       default:
-        return status;
+        return status
     }
   }
 
   function getStatusColorClass(status: string) {
     switch (status) {
-      case "requested":
-        return "bg-amber-100 text-amber-700 border-amber-200";
-      case "accepted":
-        return "bg-emerald-100 text-emerald-700 border-emerald-200";
-      case "rejected":
-        return "bg-rose-100 text-rose-700 border-rose-200";
-      case "completed":
-        return "bg-blue-100 text-blue-700 border-blue-200";
+      case 'requested':
+        return 'bg-amber-100 text-amber-700 border-amber-200'
+      case 'accepted':
+        return 'bg-emerald-100 text-emerald-700 border-emerald-200'
+      case 'rejected':
+        return 'bg-rose-100 text-rose-700 border-rose-200'
+      case 'completed':
+        return 'bg-blue-100 text-blue-700 border-blue-200'
       default:
-        return "bg-gray-100 text-gray-700 border-gray-200";
+        return 'bg-gray-100 text-gray-700 border-gray-200'
     }
   }
 
   async function handleUnblockSeller(book: BookListing) {
-    if (!book.sellerId || unblockSubmitting) return;
+    if (!book.sellerId || unblockSubmitting) return
 
-    clearTrustMessages();
-    unblockSubmitting = true;
+    clearTrustMessages()
+    unblockSubmitting = true
     try {
-      const result = await unblockMarketplaceUser(book.sellerId);
+      const result = await unblockMarketplaceUser(book.sellerId)
       if (!result.success) {
-        showError(result.message || "Could not unblock seller.");
-        return;
+        showError(result.message || 'Could not unblock seller.')
+        return
       }
 
-      showSuccess("Seller unblocked.");
-      await blockedUsersQuery.refetch();
+      showSuccess('Seller unblocked.')
+      await blockedUsersQuery.refetch()
     } catch (error) {
-      console.error("Failed to unblock seller:", error);
-      showError("Could not unblock seller.");
+      console.error('Failed to unblock seller:', error)
+      showError('Could not unblock seller.')
     } finally {
-      unblockSubmitting = false;
+      unblockSubmitting = false
     }
   }
 
   async function copyAllContactInfo() {
-    const contact = sellerContactQuery.data;
-    if (!contact) return;
+    const contact = sellerContactQuery.data
+    if (!contact) return
 
-    const lines = [];
-    if (contact.email) lines.push(`Email: ${contact.email}`);
-    if (contact.phoneNumber) lines.push(`Phone: ${contact.phoneNumber}`);
-    if (contact.whatsapp) lines.push(`WhatsApp: ${contact.whatsapp}`);
+    const lines = []
+    if (contact.email) lines.push(`Email: ${contact.email}`)
+    if (contact.phoneNumber) lines.push(`Phone: ${contact.phoneNumber}`)
+    if (contact.whatsapp) lines.push(`WhatsApp: ${contact.whatsapp}`)
     if (contact.telegramUsername)
-      lines.push(`Telegram: @${contact.telegramUsername}`);
+      lines.push(`Telegram: @${contact.telegramUsername}`)
     if (contact.facebookMessenger)
-      lines.push(`Messenger: ${contact.facebookMessenger}`);
+      lines.push(`Messenger: ${contact.facebookMessenger}`)
     if (contact.otherContactDetails)
-      lines.push(`Other: ${contact.otherContactDetails}`);
+      lines.push(`Other: ${contact.otherContactDetails}`)
 
-    if (lines.length === 0) return;
+    if (lines.length === 0) return
 
     try {
-      await navigator.clipboard.writeText(lines.join("\n"));
-      showSuccess("All contact info copied!");
+      await navigator.clipboard.writeText(lines.join('\n'))
+      showSuccess('All contact info copied!')
     } catch (err) {
-      showError("Failed to copy contact info");
+      showError('Failed to copy contact info')
     }
   }
 </script>
@@ -690,7 +687,7 @@
             class="bg-slate-50/50 p-4 sm:p-6 border-b lg:border-b-0 lg:border-r border-slate-100"
           >
             <div
-              class="group relative h-80 sm:h-96 lg:h-[32rem] w-full bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm flex items-center justify-center transition-all hover:shadow-md"
+              class="group relative h-80 sm:h-96 lg:h-128 w-full bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm flex items-center justify-center transition-all hover:shadow-md"
             >
               {#if book.edition}
                 <span
@@ -780,9 +777,9 @@
                     class="w-10 h-10 rounded-full bg-indigo-100 text-indigo-700 font-bold flex items-center justify-center text-sm"
                   >
                     {book.seller.name.charAt(0).toUpperCase()}{book.seller.name
-                      .split(" ")[1]
+                      .split(' ')[1]
                       ?.charAt(0)
-                      .toUpperCase() || ""}
+                      .toUpperCase() || ''}
                   </div>
                 {/if}
                 <div class="min-w-0 flex-1">
@@ -795,8 +792,8 @@
                 </div>
                 <button
                   onclick={() => {
-                    profileModalOpen = true;
-                    profileTab = "listings";
+                    profileModalOpen = true
+                    profileTab = 'listings'
                   }}
                   class="text-sm font-semibold text-blue-600 hover:text-blue-700 transition-colors whitespace-nowrap"
                 >
@@ -828,8 +825,8 @@
                     >
                       <button
                         onclick={() => {
-                          reportModalOpen = true;
-                          sellerMenuOpen = false;
+                          reportModalOpen = true
+                          sellerMenuOpen = false
                         }}
                         class="w-full px-4 py-2.5 text-left text-sm font-semibold text-rose-600 hover:bg-rose-50 flex items-center gap-3 transition-colors"
                       >
@@ -850,8 +847,8 @@
                       </button>
                       <button
                         onclick={() => {
-                          blockModalOpen = true;
-                          sellerMenuOpen = false;
+                          blockModalOpen = true
+                          sellerMenuOpen = false
                         }}
                         class="w-full px-4 py-2.5 text-left text-sm font-semibold text-rose-600 hover:bg-rose-50 flex items-center gap-3 transition-colors"
                       >
@@ -895,7 +892,7 @@
                   >Rs. {parseFloat(book.price).toLocaleString()}</span
                 >
               {/if}
-              {#if book.status === "sold"}
+              {#if book.status === 'sold'}
                 <span
                   class="px-2.5 py-1 rounded-full bg-rose-100 text-rose-700 text-xs font-bold border border-rose-200"
                   >Sold</span
@@ -1012,7 +1009,7 @@
                     ? 'text-emerald-600'
                     : 'text-rose-600'}"
                 >
-                  {#if book.status === "available"}Available{:else if book.status === "sold"}Sold
+                  {#if book.status === 'available'}Available{:else if book.status === 'sold'}Sold
                     Out{:else}{book.status}{/if}
                 </p>
               </div>
@@ -1028,7 +1025,7 @@
                     class="px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-600 text-xs font-bold border border-indigo-100"
                   >
                     {purchaseRequestQuery.data.filter(
-                      (r) => r.status === "requested",
+                      (r) => r.status === 'requested',
                     ).length} Pending
                   </span>
                 </div>
@@ -1053,7 +1050,7 @@
                             <div
                               class="w-12 h-12 rounded-full bg-indigo-100 flex items-center justify-center text-sm font-black text-indigo-600 border-2 border-white shadow-sm"
                             >
-                              {request.buyer?.name?.charAt(0) || "U"}
+                              {request.buyer?.name?.charAt(0) || 'U'}
                             </div>
                           {/if}
                           <div
@@ -1087,7 +1084,7 @@
                       </div>
 
                       <div class="flex items-center gap-2">
-                        {#if request.status === "requested"}
+                        {#if request.status === 'requested'}
                           <button
                             onclick={() =>
                               handleRespondToRequest(request.id, true)}
@@ -1095,8 +1092,8 @@
                             class="px-4 py-2 rounded-xl bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 transition-all active:scale-95 disabled:opacity-50"
                           >
                             {respondingToRequest === request.id
-                              ? "..."
-                              : "Accept"}
+                              ? '...'
+                              : 'Accept'}
                           </button>
                           <button
                             onclick={() =>
@@ -1163,7 +1160,7 @@
                     onclick={() => (requestToBuyModalOpen = true)}
                     class="mt-6 w-full py-3.5 rounded-xl text-white font-bold text-base flex items-center justify-center gap-2 transition-all active:scale-[0.98] shadow-lg shadow-indigo-200"
                     style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%);"
-                    disabled={book.status !== "available"}
+                    disabled={book.status !== 'available'}
                   >
                     <svg
                       class="w-5 h-5"
@@ -1190,7 +1187,7 @@
                   >
                     <svg
                       class="w-4 h-4"
-                      fill={savedState ? "currentColor" : "none"}
+                      fill={savedState ? 'currentColor' : 'none'}
                       stroke="currentColor"
                       viewBox="0 0 24 24"
                       ><path
@@ -1200,7 +1197,7 @@
                         d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
                       /></svg
                     >
-                    {saving ? "Saving..." : savedState ? "Saved" : "Save"}
+                    {saving ? 'Saving...' : savedState ? 'Saved' : 'Save'}
                   </button>
                   <button
                     onclick={handleShare}
@@ -1246,7 +1243,7 @@
                     them to arrange payment and pickup.
                   </p>
                 </div>
-              {:else if reqStatus === "requested"}
+              {:else if reqStatus === 'requested'}
                 <div
                   class="mt-6 p-5 rounded-xl border-2 border-amber-100 bg-amber-50/50"
                 >
@@ -1291,8 +1288,8 @@
                   disabled={cancellingRequest}
                   class="mt-3 w-full py-3 rounded-xl border-2 border-rose-200 text-rose-600 font-bold text-sm hover:bg-rose-50 transition-colors disabled:opacity-50"
                   >{cancellingRequest
-                    ? "Cancelling..."
-                    : "Cancel Request"}</button
+                    ? 'Cancelling...'
+                    : 'Cancel Request'}</button
                 >
                 <div class="mt-3 grid grid-cols-2 gap-3">
                   <button
@@ -1303,7 +1300,7 @@
                       : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50'}"
                     ><svg
                       class="w-4 h-4"
-                      fill={savedState ? "currentColor" : "none"}
+                      fill={savedState ? 'currentColor' : 'none'}
                       stroke="currentColor"
                       viewBox="0 0 24 24"
                       ><path
@@ -1313,10 +1310,10 @@
                         d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
                       /></svg
                     >{saving
-                      ? "Saving..."
+                      ? 'Saving...'
                       : savedState
-                        ? "Saved"
-                        : "Save"}</button
+                        ? 'Saved'
+                        : 'Save'}</button
                   >
                   <button
                     onclick={handleShare}
@@ -1335,7 +1332,7 @@
                     >Share</button
                   >
                 </div>
-              {:else if reqStatus === "accepted"}
+              {:else if reqStatus === 'accepted'}
                 <div
                   id="contact-info-block"
                   class="mt-6 p-6 rounded-4xl border border-emerald-100 bg-emerald-50/30 space-y-6"
@@ -1361,14 +1358,14 @@
                       </div>
                       <div>
                         <h3 class="text-xl font-black text-gray-900">
-                          {book.status === "sold"
-                            ? "Transaction Completed! 🎉"
-                            : "Request Accepted! 🎉"}
+                          {book.status === 'sold'
+                            ? 'Transaction Completed! 🎉'
+                            : 'Request Accepted! 🎉'}
                         </h3>
                         <p class="text-sm text-gray-600 font-medium">
-                          {book.status === "sold"
-                            ? `You purchased this book from ${book.seller?.name || "the seller"}.`
-                            : `${book.seller?.name || "The seller"} has accepted your request.`}
+                          {book.status === 'sold'
+                            ? `You purchased this book from ${book.seller?.name || 'the seller'}.`
+                            : `${book.seller?.name || 'The seller'} has accepted your request.`}
                         </p>
                       </div>
                     </div>
@@ -1519,7 +1516,7 @@
                             >
                               <div class="flex items-center gap-3">
                                 <div
-                                  class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 shadow-lg shadow-purple-200 flex items-center justify-center text-white"
+                                  class="w-10 h-10 rounded-xl bg-linear-to-br from-indigo-500 via-purple-500 to-pink-500 shadow-lg shadow-purple-200 flex items-center justify-center text-white"
                                 >
                                   <svg
                                     class="w-6 h-6"
@@ -1765,7 +1762,7 @@
                   </div>
                 </div>
 
-                {#if book.status === "sold"}
+                {#if book.status === 'sold'}
                   <button
                     bind:this={ctaRef}
                     onclick={() => (rateModalOpen = true)}
@@ -1846,7 +1843,7 @@
                     Message Seller
                   </a>
                 {/if}
-              {:else if reqStatus === "completed"}
+              {:else if reqStatus === 'completed'}
                 <div
                   class="mt-6 p-5 rounded-xl border-2 border-emerald-100 bg-emerald-50/50"
                 >
@@ -1937,7 +1934,7 @@
                     >Report Issue</button
                   >
                 </div>
-              {:else if reqStatus === "rejected"}
+              {:else if reqStatus === 'rejected'}
                 <div
                   bind:this={ctaRef}
                   class="mt-6 p-5 rounded-xl border-2 border-rose-100 bg-rose-50/50"
@@ -1977,7 +1974,7 @@
               {/if}
             {:else if book.isOwner}
               <div class="mt-5 flex flex-wrap gap-2.5">
-                {#if book.status === "available"}
+                {#if book.status === 'available'}
                   <a
                     href="/books/sell?edit={book.id}"
                     use:routeAction
@@ -1988,17 +1985,17 @@
                     onclick={handleMarkSold}
                     disabled={markingSold}
                     class="px-4 py-2 rounded-xl bg-emerald-600 text-white text-sm font-semibold hover:bg-emerald-700 transition-colors disabled:opacity-50"
-                    >{markingSold ? "Marking..." : "Mark as Sold"}</button
+                    >{markingSold ? 'Marking...' : 'Mark as Sold'}</button
                   >
                 {/if}
                 <button
                   onclick={handleDelete}
                   disabled={deleting}
                   class="px-4 py-2 rounded-xl border border-rose-200 text-rose-700 text-sm font-semibold hover:bg-rose-50 transition-colors disabled:opacity-50"
-                  >{deleting ? "Deleting..." : "Delete"}</button
+                  >{deleting ? 'Deleting...' : 'Delete'}</button
                 >
               </div>
-            {:else if !$session.data?.user && book.status === "available"}
+            {:else if !$session.data?.user && book.status === 'available'}
               <a
                 href="/register"
                 use:routeAction
@@ -2030,7 +2027,7 @@
     <div
       class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
       onclick={() => (requestToBuyModalOpen = false)}
-      onkeydown={(e) => e.key === "Escape" && (requestToBuyModalOpen = false)}
+      onkeydown={(e) => e.key === 'Escape' && (requestToBuyModalOpen = false)}
       role="button"
       tabindex="-1"
       aria-label="Close modal"
@@ -2093,7 +2090,7 @@
               disabled={requestSubmitting}
               class="flex-1 px-6 py-3 bg-blue-600 text-white font-bold rounded-2xl hover:bg-blue-700 disabled:opacity-50 transition-all shadow-lg shadow-blue-200 active:scale-95"
             >
-              {requestSubmitting ? "Sending..." : "Send Request"}
+              {requestSubmitting ? 'Sending...' : 'Send Request'}
             </button>
             <button
               onclick={() => (requestToBuyModalOpen = false)}
@@ -2116,7 +2113,7 @@
     <div
       class="absolute inset-0 bg-slate-900/60 backdrop-blur-md"
       onclick={() => (reviewsModalOpen = false)}
-      onkeydown={(e) => e.key === "Escape" && (reviewsModalOpen = false)}
+      onkeydown={(e) => e.key === 'Escape' && (reviewsModalOpen = false)}
       role="button"
       tabindex="-1"
       aria-label="Close reviews"
@@ -2174,13 +2171,13 @@
                       <div
                         class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-xs font-black text-blue-600 border-2 border-white shadow-sm"
                       >
-                        {rating.rater?.name?.charAt(0).toUpperCase() || "U"}
+                        {rating.rater?.name?.charAt(0).toUpperCase() || 'U'}
                       </div>
                     {/if}
                   </div>
                   <div>
                     <p class="text-sm font-black text-slate-900">
-                      {rating.rater?.name || "Anonymous User"}
+                      {rating.rater?.name || 'Anonymous User'}
                     </p>
                     <div class="flex items-center gap-1 mt-0.5">
                       {#each Array(5) as _, i}
@@ -2273,13 +2270,13 @@
     <div
       class="absolute inset-0 bg-slate-900/60 backdrop-blur-md"
       onclick={() => (rateModalOpen = false)}
-      onkeydown={(e) => e.key === "Escape" && (rateModalOpen = false)}
+      onkeydown={(e) => e.key === 'Escape' && (rateModalOpen = false)}
       role="button"
       tabindex="-1"
       aria-label="Close rating modal"
     ></div>
     <div
-      class="relative w-full max-w-lg bg-white rounded-[2rem] shadow-2xl overflow-hidden border border-slate-200"
+      class="relative w-full max-w-lg bg-white rounded-4xl shadow-2xl overflow-hidden border border-slate-200"
       transition:fly={{ y: 20, duration: 400 }}
     >
       <div class="px-8 pt-8 pb-10">
@@ -2287,6 +2284,7 @@
           <h3 class="text-2xl font-black text-[#1e293b] tracking-tight">
             Rate Your Experience
           </h3>
+          <!-- svelte-ignore a11y_consider_explicit_label -->
           <button
             onclick={() => (rateModalOpen = false)}
             class="p-2 hover:bg-slate-100 rounded-full transition-colors"
@@ -2335,6 +2333,7 @@
           </div>
 
           <div class="mb-6">
+            <!-- svelte-ignore a11y_label_has_associated_control -->
             <label class="block text-sm font-bold text-[#1e293b] mb-3">
               Share your experience (optional)
             </label>
@@ -2350,6 +2349,7 @@
           </div>
 
           <div class="mt-8">
+            <!-- svelte-ignore a11y_label_has_associated_control -->
             <label class="block text-sm font-bold text-[#1e293b] mb-4">
               What stood out? (optional)
             </label>
@@ -2379,14 +2379,14 @@
           </button>
           <button
             onclick={async () => {
-              await handleRateSeller(bookQuery.data!);
-              if (!trustError) rateModalOpen = false;
+              await handleRateSeller(bookQuery.data!)
+              if (!trustError) rateModalOpen = false
             }}
             disabled={ratingSubmitting}
             class="flex-1 py-4 bg-indigo-600 text-white font-bold text-sm rounded-2xl hover:bg-indigo-700 disabled:opacity-50 transition-all active:scale-95"
             style="background: #6366f1;"
           >
-            {ratingSubmitting ? "Submitting..." : "Submit Review"}
+            {ratingSubmitting ? 'Submitting...' : 'Submit Review'}
           </button>
         </div>
       </div>
@@ -2403,7 +2403,7 @@
     <div
       class="absolute inset-0 bg-slate-900/60 backdrop-blur-md"
       onclick={() => (reportModalOpen = false)}
-      onkeydown={(e) => e.key === "Escape" && (reportModalOpen = false)}
+      onkeydown={(e) => e.key === 'Escape' && (reportModalOpen = false)}
       role="button"
       tabindex="-1"
       aria-label="Close report modal"
@@ -2466,13 +2466,13 @@
           </button>
           <button
             onclick={async () => {
-              await handleReportSeller(bookQuery.data!);
-              if (!trustError) reportModalOpen = false;
+              await handleReportSeller(bookQuery.data!)
+              if (!trustError) reportModalOpen = false
             }}
             disabled={reportSubmitting}
             class="flex-1 py-4 bg-rose-600 text-white font-black text-sm rounded-2xl hover:bg-rose-700 disabled:opacity-50 transition-all shadow-xl shadow-rose-200 active:scale-95"
           >
-            {reportSubmitting ? "SUBMITTING..." : "SEND REPORT"}
+            {reportSubmitting ? 'SUBMITTING...' : 'SEND REPORT'}
           </button>
         </div>
       </div>
@@ -2492,7 +2492,7 @@
     <div
       class="absolute inset-0 bg-slate-900/60 backdrop-blur-md"
       onclick={() => (blockModalOpen = false)}
-      onkeydown={(e) => e.key === "Escape" && (blockModalOpen = false)}
+      onkeydown={(e) => e.key === 'Escape' && (blockModalOpen = false)}
       role="button"
       tabindex="-1"
       aria-label="Close block modal"
@@ -2550,17 +2550,17 @@
           </button>
           <button
             onclick={async () => {
-              if (sellerBlocked) await handleUnblockSeller(bookQuery.data!);
-              else await handleBlockSeller(bookQuery.data!);
-              if (!trustError) blockModalOpen = false;
+              if (sellerBlocked) await handleUnblockSeller(bookQuery.data!)
+              else await handleBlockSeller(bookQuery.data!)
+              if (!trustError) blockModalOpen = false
             }}
             disabled={blockSubmitting || unblockSubmitting}
             class="flex-1 py-4 bg-slate-900 text-white font-black text-sm rounded-2xl hover:bg-slate-800 disabled:opacity-50 transition-all shadow-xl shadow-slate-200 active:scale-95"
           >
             {#if sellerBlocked}
-              {unblockSubmitting ? "UNBLOCKING..." : "CONFIRM UNBLOCK"}
+              {unblockSubmitting ? 'UNBLOCKING...' : 'CONFIRM UNBLOCK'}
             {:else}
-              {blockSubmitting ? "BLOCKING..." : "CONFIRM BLOCK"}
+              {blockSubmitting ? 'BLOCKING...' : 'CONFIRM BLOCK'}
             {/if}
           </button>
         </div>
@@ -2574,6 +2574,7 @@
     class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6"
     transition:fade={{ duration: 200 }}
   >
+    <!-- svelte-ignore a11y_click_events_have_key_events -->
     <div
       class="absolute inset-0 bg-slate-900/60 backdrop-blur-md"
       onclick={() => (profileModalOpen = false)}
@@ -2586,8 +2587,9 @@
     >
       <!-- Header -->
       <div
-        class="relative h-32 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500"
+        class="relative h-32 bg-linear-to-r from-indigo-600 via-purple-600 to-pink-500"
       >
+        <!-- svelte-ignore a11y_consider_explicit_label -->
         <button
           onclick={() => (profileModalOpen = false)}
           class="absolute top-4 right-4 p-2 bg-white/20 hover:bg-white/30 rounded-full text-white transition-colors"
@@ -2622,7 +2624,7 @@
               <div
                 class="w-24 h-24 rounded-full bg-indigo-100 text-indigo-700 text-3xl font-black flex items-center justify-center"
               >
-                {book?.seller?.name?.charAt(0) || "U"}
+                {book?.seller?.name?.charAt(0) || 'U'}
               </div>
             {/if}
           </div>
@@ -2633,9 +2635,9 @@
         >
           <div>
             <h2 class="text-2xl font-black text-gray-900">
-              {book?.seller?.name || "Anonymous"}
+              {book?.seller?.name || 'Anonymous'}
             </h2>
-            <p class="text-sm text-gray-500">{book?.seller?.email || ""}</p>
+            <p class="text-sm text-gray-500">{book?.seller?.email || ''}</p>
             <div class="mt-2 flex flex-wrap gap-2">
               {#if book?.seller?.isVerifiedSeller}
                 <span
@@ -2688,7 +2690,7 @@
             <div class="mt-1 flex items-center justify-center gap-1">
               <span class="text-xl font-black text-amber-500"
                 >{sellerReputationQuery.data?.averageRating?.toFixed(1) ||
-                  "0.0"}</span
+                  '0.0'}</span
               >
               <svg
                 class="w-4 h-4 text-amber-500 fill-current"
@@ -2704,7 +2706,7 @@
         <!-- Tabs -->
         <div class="mt-8">
           <div class="flex border-b border-slate-100 px-2">
-            {#each ["listings", "reviews"] as tab}
+            {#each ['listings', 'reviews'] as tab}
               <button
                 onclick={() => (profileTab = tab as any)}
                 class="px-6 py-3 text-sm font-bold capitalize transition-all relative {profileTab ===
@@ -2724,7 +2726,7 @@
           </div>
 
           <div class="mt-6">
-            {#if profileTab === "listings"}
+            {#if profileTab === 'listings'}
               {#if sellerListingsQuery.data?.listings && sellerListingsQuery.data.listings.length > 0}
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {#each sellerListingsQuery.data.listings as item}
@@ -2734,7 +2736,7 @@
                     >
                       <div class="flex gap-3">
                         <div
-                          class="w-20 h-20 rounded-xl overflow-hidden bg-slate-100 flex-shrink-0"
+                          class="w-20 h-20 rounded-xl overflow-hidden bg-slate-100 shrink-0"
                         >
                           {#if item.images?.[0]}
                             <img
@@ -2771,7 +2773,7 @@
                           <div class="mt-1 flex items-center gap-2">
                             <span class="text-xs font-black text-indigo-600"
                               >Rs. {parseFloat(
-                                item.price || "0",
+                                item.price || '0',
                               ).toLocaleString()}</span
                             >
                             <span
@@ -2789,7 +2791,7 @@
                   <p class="text-sm text-gray-500">No other listings found</p>
                 </div>
               {/if}
-            {:else if profileTab === "reviews"}
+            {:else if profileTab === 'reviews'}
               {#if sellerReputationQuery.data?.recentRatings && sellerReputationQuery.data.recentRatings.length > 0}
                 <div class="space-y-4">
                   {#each sellerReputationQuery.data.recentRatings as review}
@@ -2808,20 +2810,20 @@
                             <div
                               class="w-10 h-10 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold text-xs border-2 border-white shadow-sm"
                             >
-                              {review.rater?.name?.charAt(0) || "U"}
+                              {review.rater?.name?.charAt(0) || 'U'}
                             </div>
                           {/if}
                           <div>
                             <p class="text-sm font-bold text-gray-900">
-                              {review.rater?.name || "Anonymous"}
+                              {review.rater?.name || 'Anonymous'}
                             </p>
                             <p class="text-[10px] text-gray-400 font-medium">
                               {new Date(review.createdAt).toLocaleDateString(
                                 undefined,
                                 {
-                                  year: "numeric",
-                                  month: "short",
-                                  day: "numeric",
+                                  year: 'numeric',
+                                  month: 'short',
+                                  day: 'numeric',
                                 },
                               )}
                             </p>
@@ -2894,7 +2896,9 @@
       : 'translate-y-full'}"
     transition:fly={{ y: 100, duration: 500 }}
   >
-    <div class="max-w-7xl mx-auto flex items-center justify-between gap-3 sm:gap-6">
+    <div
+      class="max-w-7xl mx-auto flex items-center justify-between gap-3 sm:gap-6"
+    >
       <div class="flex items-center gap-3 sm:gap-4 min-w-0">
         <div class="shrink-0">
           {#if book?.images?.[0]}
@@ -2931,7 +2935,7 @@
           </p>
           <div class="flex items-center gap-2 sm:gap-3">
             <span class="text-emerald-600 font-black text-xs sm:text-base"
-              >Rs. {parseFloat(book?.price || "0").toLocaleString()}</span
+              >Rs. {parseFloat(book?.price || '0').toLocaleString()}</span
             >
             <span
               class="px-1.5 py-0.5 rounded-full bg-slate-100 text-[8px] sm:text-[10px] font-black text-slate-500 uppercase tracking-widest border border-slate-200/50"
@@ -2962,10 +2966,10 @@
                 aria-label="Toggle wishlist"
               >
                 <svg
-                  class="w-4 h-4 sm:w-5 h-5 transition-all {savedState
+                  class="w-4 h-4 sm:w-5 transition-all {savedState
                     ? 'fill-rose-500 text-rose-500 scale-110'
                     : 'group-hover:scale-110'}"
-                  fill={savedState ? "currentColor" : "none"}
+                  fill={savedState ? 'currentColor' : 'none'}
                   stroke="currentColor"
                   viewBox="0 0 24 24"
                 >
@@ -2978,14 +2982,14 @@
                 </svg>
               </button>
             </div>
-          {:else if reqStatus === "requested"}
+          {:else if reqStatus === 'requested'}
             <button
               onclick={handleCancelRequest}
               class="px-5 sm:px-8 py-3 sm:py-3.5 rounded-xl sm:rounded-2xl border-2 border-rose-100 bg-rose-50 text-rose-600 text-xs sm:text-base font-black hover:bg-rose-100 active:scale-95 transition-all"
             >
               Cancel Request
             </button>
-          {:else if reqStatus === "accepted"}
+          {:else if reqStatus === 'accepted'}
             <div
               class="hidden sm:flex px-4 py-2 rounded-2xl bg-emerald-50 text-emerald-600 text-[11px] font-black uppercase tracking-widest border border-emerald-100 items-center gap-2"
             >
@@ -2997,14 +3001,14 @@
             {#if hasSellerContactInfo}
               <button
                 onclick={() => {
-                  const el = document.getElementById("contact-info-block");
-                  if (el) el.scrollIntoView({ behavior: "smooth" });
+                  const el = document.getElementById('contact-info-block')
+                  if (el) el.scrollIntoView({ behavior: 'smooth' })
                 }}
                 class="px-5 sm:px-8 py-3 sm:py-3.5 rounded-xl sm:rounded-2xl text-white text-xs font-black flex items-center gap-2 active:scale-95 transition-all shadow-xl shadow-indigo-100/50"
                 style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%);"
               >
                 <svg
-                  class="w-4 h-4 sm:w-5 h-5"
+                  class="w-4 h-4 sm:w-5"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -3025,7 +3029,7 @@
                 style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%);"
               >
                 <svg
-                  class="w-4 h-4 sm:w-5 h-5"
+                  class="w-4 h-4 sm:w-5"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -3040,7 +3044,7 @@
                 Message
               </a>
             {/if}
-          {:else if reqStatus === "completed"}
+          {:else if reqStatus === 'completed'}
             <button
               onclick={() => (rateModalOpen = true)}
               class="px-5 sm:px-8 py-3 sm:py-3.5 rounded-xl sm:rounded-2xl text-white text-xs sm:text-base font-black shadow-xl shadow-indigo-100/50 active:scale-95 transition-all hover:brightness-110"
@@ -3059,11 +3063,11 @@
   <div
     class="fixed {showStickyBar
       ? 'bottom-24 sm:bottom-28'
-      : 'bottom-6 sm:bottom-8'} left-1/2 -translate-x-1/2 z-[60] px-5 py-3.5 rounded-2xl bg-slate-900/95 backdrop-blur-xl border border-white/10 text-white font-semibold text-[13px] shadow-2xl flex items-center gap-3.5 transition-all duration-500 w-[92%] max-w-sm sm:w-auto"
+      : 'bottom-6 sm:bottom-8'} left-1/2 -translate-x-1/2 z-60 px-5 py-3.5 rounded-2xl bg-slate-900/95 backdrop-blur-xl border border-white/10 text-white font-semibold text-[13px] shadow-2xl flex items-center gap-3.5 transition-all duration-500 w-[92%] max-w-sm sm:w-auto"
     transition:fly={{ y: 32, duration: 600, easing: quintOut }}
   >
     <div
-      class="flex-shrink-0 w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center border border-emerald-500/20"
+      class="shrink-0 w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center border border-emerald-500/20"
     >
       <svg
         class="w-5 h-5 text-emerald-400"
@@ -3106,11 +3110,11 @@
   <div
     class="fixed {showStickyBar
       ? 'bottom-24 sm:bottom-28'
-      : 'bottom-6 sm:bottom-8'} left-1/2 -translate-x-1/2 z-[60] px-5 py-3.5 rounded-2xl bg-white/95 backdrop-blur-xl border border-rose-100 text-rose-600 font-semibold text-[13px] shadow-2xl flex items-center gap-3.5 transition-all duration-500 w-[92%] max-w-sm sm:w-auto"
+      : 'bottom-6 sm:bottom-8'} left-1/2 -translate-x-1/2 z-60 px-5 py-3.5 rounded-2xl bg-white/95 backdrop-blur-xl border border-rose-100 text-rose-600 font-semibold text-[13px] shadow-2xl flex items-center gap-3.5 transition-all duration-500 w-[92%] max-w-sm sm:w-auto"
     transition:fly={{ y: 32, duration: 600, easing: quintOut }}
   >
     <div
-      class="flex-shrink-0 w-8 h-8 rounded-full bg-rose-50 flex items-center justify-center border border-rose-100"
+      class="shrink-0 w-8 h-8 rounded-full bg-rose-50 flex items-center justify-center border border-rose-100"
     >
       <svg
         class="w-5 h-5"
