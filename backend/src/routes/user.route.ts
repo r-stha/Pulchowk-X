@@ -1,7 +1,8 @@
 import express from "express";
+import crypto from "node:crypto";
 import { db } from "../lib/db.js";
-import { user } from "../models/auth-schema.js";
-import { eq } from "drizzle-orm";
+import { user, account } from "../models/auth-schema.js";
+import { eq, and } from "drizzle-orm";
 import { requireFirebaseAuth } from "../middleware/auth.middleware.js";
 
 import { determineUserRole } from "../lib/student-email-parser.js";
@@ -133,6 +134,26 @@ router.post("/sync-user", requireFirebaseAuth, async (req, res) => {
                     updatedAt: new Date(),
                 })
                 .where(eq(user.id, existingUserByEmail.id));
+
+            // Create account link for Firebase if it doesn't exist
+            const existingAccount = await db.query.account.findFirst({
+                where: and(
+                    eq(account.providerId, "firebase"),
+                    eq(account.accountId, authStudentId)
+                )
+            });
+
+            if (!existingAccount) {
+                await db.insert(account).values({
+                    id: crypto.randomUUID(),
+                    userId: existingUserByEmail.id,
+                    providerId: "firebase",
+                    accountId: authStudentId,
+                    createdAt: new Date(),
+                    updatedAt: new Date(),
+                });
+                console.log(`[Sync] Created Firebase account link for user ${existingUserByEmail.id}`);
+            }
 
             res.json({
                 data: {
