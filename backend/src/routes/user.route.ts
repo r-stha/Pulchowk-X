@@ -5,6 +5,7 @@ import { eq } from "drizzle-orm";
 import { requireFirebaseAuth } from "../middleware/auth.middleware.js";
 
 import { determineUserRole } from "../lib/student-email-parser.js";
+import { sendToUser } from "../services/notification.service.js";
 
 const router = express.Router();
 
@@ -96,6 +97,21 @@ router.post("/sync-user", requireFirebaseAuth, async (req, res) => {
                     user: { id: authStudentId, email, name, role: existingUserById.role === 'guest' ? role : existingUserById.role },
                 },
             });
+
+            // Send security notification for sign-in from existing user
+            sendToUser(authStudentId, {
+                title: 'New sign-in detected',
+                body: 'Your account was signed in from a mobile device.',
+                data: {
+                    type: 'security_alert',
+                    iconKey: 'general',
+                    ipAddress: req.ip || '',
+                    userAgent: req.headers['user-agent'] || '',
+                },
+            }).catch((error) =>
+                console.error('Failed to send mobile security alert notification (existing):', error),
+            );
+
             return;
         }
 
@@ -132,6 +148,21 @@ router.post("/sync-user", requireFirebaseAuth, async (req, res) => {
                     firebaseUid: authStudentId
                 },
             });
+
+            // Send security notification for account linking sign-in
+            sendToUser(existingUserByEmail.id, {
+                title: 'New sign-in detected',
+                body: 'Your account was linked and signed in from a new mobile session.',
+                data: {
+                    type: 'security_alert',
+                    iconKey: 'general',
+                    ipAddress: req.ip || '',
+                    userAgent: req.headers['user-agent'] || '',
+                },
+            }).catch((error) =>
+                console.error('Failed to send mobile security alert notification (linking):', error),
+            );
+
             return;
         }
 
@@ -148,6 +179,20 @@ router.post("/sync-user", requireFirebaseAuth, async (req, res) => {
                 fcmToken: fcmToken,
             })
             .returning();
+
+        // Send security notification for new sign-in
+        sendToUser(newUser.id, {
+            title: 'New sign-in detected',
+            body: 'Your account was signed in from a new mobile session.',
+            data: {
+                type: 'security_alert',
+                iconKey: 'general',
+                ipAddress: req.ip || '',
+                userAgent: req.headers['user-agent'] || '',
+            },
+        }).catch((error) =>
+            console.error('Failed to send mobile security alert notification:', error),
+        );
 
         res.status(201).json({
             data: {
