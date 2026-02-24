@@ -234,6 +234,7 @@
       noticeCategoryRaw === 'results' ||
       noticeCategoryRaw === 'application_forms' ||
       noticeCategoryRaw === 'exam_centers' ||
+      noticeCategoryRaw === 'exam_routines' ||
       noticeCategoryRaw === 'general'
         ? noticeCategoryRaw
         : ''
@@ -783,7 +784,8 @@
             : 'was cancelled'
       return {
         actor: null,
-        action: lostFoundItemType === 'lost' ? 'Your report for' : 'Your claim for',
+        action:
+          lostFoundItemType === 'lost' ? 'Your report for' : 'Your claim for',
         subject: lostFoundTitle,
         suffix: `${lostFoundTitle ? ' ' : ''}${statusText}.`,
       }
@@ -1107,4 +1109,3 @@
     {/if}
   </div>
 </div>
-
