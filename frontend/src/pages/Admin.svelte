@@ -184,7 +184,7 @@
     }
   }
 
-  const roleOptions = ["student", "teacher", "admin", "guest"];
+  const roleOptions = ["student", "teacher", "admin", "notice_manager", "guest"];
 
   function getInitials(name: string) {
     return name?.charAt(0)?.toUpperCase() || "U";
