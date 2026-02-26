@@ -88,6 +88,11 @@
   // Image preview modal
   let previewImage = $state<string | null>(null)
   let previewTitle = $state('')
+  let previewPlaceholderSrc = $state('')
+  let fullscreenBlobUrl = $state<string | null>(null)
+  let fullscreenProgress = $state<number | undefined>(undefined)
+  let fullscreenLoaded = $state(false)
+  let fullscreenXhr: XMLHttpRequest | null = null
 
   // Management modal state
   let showManageModal = $state(false)
@@ -353,9 +358,75 @@
     syncNoticesRouteState()
   })
 
-  function openImagePreview(url: string, title: string) {
+  function openImagePreview(url: string, title: string, noticeId?: number) {
     previewImage = url
     previewTitle = title
+    fullscreenLoaded = false
+    fullscreenProgress = undefined
+    fullscreenBlobUrl = null
+
+    // Use the already-loaded blob URL from the card image as placeholder,
+    // or fall back to the optimized 800px URL (which should be cached)
+    if (noticeId !== undefined && imageBlobUrls[noticeId]) {
+      previewPlaceholderSrc = imageBlobUrls[noticeId]
+    } else {
+      previewPlaceholderSrc = optimizeCloudinaryUrl(url, 800)
+    }
+
+    // Start loading the HQ version in the background
+    loadFullscreenImage(url)
+  }
+
+  function loadFullscreenImage(rawUrl: string) {
+    const hqUrl = optimizeCloudinaryUrl(rawUrl, 1600)
+    fullscreenProgress = 0
+
+    const xhr = new XMLHttpRequest()
+    fullscreenXhr = xhr
+    xhr.open('GET', hqUrl, true)
+    xhr.responseType = 'blob'
+
+    xhr.onprogress = (event) => {
+      if (event.lengthComputable) {
+        fullscreenProgress = Math.round((event.loaded / event.total) * 100)
+      }
+    }
+
+    xhr.onload = () => {
+      if (xhr.status === 200) {
+        fullscreenProgress = 100
+        fullscreenBlobUrl = URL.createObjectURL(xhr.response)
+      } else {
+        // Fallback: let the img load via network
+        fullscreenProgress = undefined
+      }
+      fullscreenXhr = null
+    }
+
+    xhr.onerror = () => {
+      fullscreenProgress = undefined
+      fullscreenXhr = null
+    }
+
+    xhr.send()
+  }
+
+  function closeImagePreview() {
+    previewImage = null
+    previewTitle = ''
+    // Abort any in-flight HQ download
+    if (fullscreenXhr) {
+      fullscreenXhr.abort()
+      fullscreenXhr = null
+    }
+    // Revoke blob URL to free memory
+    if (fullscreenBlobUrl) {
+      URL.revokeObjectURL(fullscreenBlobUrl)
+      fullscreenBlobUrl = null
+    }
+    fullscreenProgress = undefined
+    fullscreenLoaded = false
+    previewPlaceholderSrc = ''
   }
 
   // Load image with progress when a notice is expanded
@@ -394,10 +465,6 @@
     })
   })
 
-  function closeImagePreview() {
-    previewImage = null
-    previewTitle = ''
-  }
   function formatDate(publishedDate?: string | null, createdAt?: string) {
     if (publishedDate?.trim()) {
       const parsedPublished = new Date(publishedDate)
@@ -1110,6 +1177,7 @@
                             openImagePreview(
                               notice.attachmentUrl!,
                               notice.title,
+                              notice.id,
                             )}
                           class="block w-full relative min-h-64"
                         >
@@ -1263,15 +1331,15 @@
   <!-- svelte-ignore a11y_click_events_have_key_events -->
   <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div
-    class="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4"
+    class="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4"
     onclick={closeImagePreview}
     in:fade={{ duration: 150 }}
   >
-    <div class="relative max-w-4xl w-full">
+    <div class="relative max-w-4xl w-full" onclick={(e) => e.stopPropagation()}>
       <!-- svelte-ignore a11y_consider_explicit_label -->
       <button
         onclick={closeImagePreview}
-        class="absolute -top-12 right-0 text-white hover:text-slate-300"
+        class="absolute -top-12 right-0 text-white/70 hover:text-white transition-colors p-1 rounded-full hover:bg-white/10"
       >
         <svg
           class="w-8 h-8"
@@ -1287,11 +1355,45 @@
           />
         </svg>
       </button>
-      <img
-        src={optimizeCloudinaryUrl(previewImage, 1600)}
-        alt={previewTitle}
-        class="max-h-[80vh] mx-auto rounded-lg"
-      />
+
+      <div class="relative overflow-hidden rounded-lg">
+        <!-- Layer 1: Placeholder (already-loaded 800px image, shown blurred) -->
+        {#if previewPlaceholderSrc}
+          <img
+            src={previewPlaceholderSrc}
+            alt={previewTitle}
+            class="max-h-[80vh] mx-auto rounded-lg transition-all duration-300 {fullscreenLoaded ? 'opacity-0 absolute inset-0' : 'opacity-100'}"
+            style="filter: {fullscreenLoaded ? 'none' : 'blur(4px)'}; transform: scale({fullscreenLoaded ? 1 : 1.02})"
+          />
+        {/if}
+
+        <!-- Layer 2: HQ image (loaded via blob URL, fades in on top) -->
+        <img
+          src={fullscreenBlobUrl || optimizeCloudinaryUrl(previewImage, 1600)}
+          alt={previewTitle}
+          class="max-h-[80vh] mx-auto rounded-lg transition-opacity duration-300 {fullscreenLoaded ? 'opacity-100' : 'opacity-0 absolute inset-0'}"
+          onload={() => { fullscreenLoaded = true }}
+        />
+
+        <!-- Progress indicator (bottom of image) -->
+        {#if !fullscreenLoaded && fullscreenProgress !== undefined && fullscreenProgress < 100}
+          <div class="absolute bottom-0 left-0 right-0 p-3">
+            <div class="max-w-xs mx-auto">
+              <div class="flex items-center justify-center gap-2 mb-1.5">
+                <span class="text-xs text-white/80 font-medium drop-shadow">
+                  Loading high quality • {fullscreenProgress}%
+                </span>
+              </div>
+              <div class="w-full h-1 bg-white/20 rounded-full overflow-hidden backdrop-blur-sm">
+                <div
+                  class="h-full bg-white/80 transition-all duration-200 rounded-full"
+                  style="width: {fullscreenProgress}%"
+                ></div>
+              </div>
+            </div>
+          </div>
+        {/if}
+      </div>
     </div>
   </div>
 {/if}
