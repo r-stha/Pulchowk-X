@@ -188,6 +188,8 @@
   let imageProgress = $state<Record<number, number | undefined>>({});
   let fullscreenImagesLoaded = $state<Record<number, boolean>>({});
   let fullscreenImageProgress = $state<Record<number, number | undefined>>({});
+  let imageBlobUrls = $state<Record<number, string>>({});
+  let fullscreenBlobUrls = $state<Record<number, string>>({});
   let progressFailedUrls = new Set<string>();
   let fullscreenProgressFailedUrls = new Set<string>();
   const fullyLoadedUrls = new Set<string>();
@@ -246,17 +248,19 @@
       const reader = response.body?.getReader();
       if (!reader) throw new Error("ReadableStream not supported");
 
+      const chunks: Uint8Array[] = [];
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
 
+        chunks.push(value);
         loaded += value.length;
         imageProgress[index] = Math.round((loaded / total) * 100);
       }
 
       imageProgress[index] = 100;
-      imagesLoaded[index] = true;
-      fullyLoadedUrls.add(url);
+      // Create blob URL so <img> uses already-downloaded data instantly
+      imageBlobUrls[index] = URL.createObjectURL(new Blob(chunks));
     } catch (error) {
       console.log("Fetch progress failed, falling back", url);
       progressFailedUrls.add(url);
@@ -322,16 +326,18 @@
       const reader = response.body?.getReader();
       if (!reader) throw new Error("ReadableStream not supported");
 
+      const chunks: Uint8Array[] = [];
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
+        chunks.push(value);
         loaded += value.length;
         fullscreenImageProgress[index] = Math.round((loaded / total) * 100);
       }
 
       fullscreenImageProgress[index] = 100;
-      fullscreenImagesLoaded[index] = true;
-      fullyLoadedFullscreenUrls.add(url);
+      // Create blob URL so <img> uses already-downloaded data instantly
+      fullscreenBlobUrls[index] = URL.createObjectURL(new Blob(chunks));
     } catch (error) {
       fullscreenProgressFailedUrls.add(url);
       fullscreenImageProgress[index] = undefined;
@@ -2905,8 +2911,10 @@
               currentImageIndex = 0;
               imagesLoaded = {};
               imageProgress = {};
+              imageBlobUrls = {};
               fullscreenImagesLoaded = {};
               fullscreenImageProgress = {};
+              fullscreenBlobUrls = {};
               popupOpen = true;
             }
           }}
@@ -3056,7 +3064,7 @@
                     </div>
                   {/if}
                   <img
-                    src={getMapCardImageUrl(img)}
+                    src={imageBlobUrls[i] || getMapCardImageUrl(img)}
                     alt={popupData.title}
                     onload={() => {
                       imagesLoaded[i] = true;
@@ -3169,7 +3177,7 @@
                   </div>
                 {/if}
                 <img
-                  src={getMapCardImageUrl(popupData.image)}
+                  src={imageBlobUrls[0] || getMapCardImageUrl(popupData.image)}
                   alt={popupData.title}
                   onload={() => {
                     imagesLoaded[0] = true;
@@ -3369,7 +3377,7 @@
               </div>
             {/if}
             <img
-              src={getMapFullscreenImageUrl(img)}
+              src={fullscreenBlobUrls[i] || getMapFullscreenImageUrl(img)}
               alt={popupData.title}
               onload={() => {
                 fullscreenImagesLoaded[i] = true;
@@ -3480,7 +3488,7 @@
           </div>
         {/if}
         <img
-          src={getMapFullscreenImageUrl(popupData.image)}
+          src={fullscreenBlobUrls[0] || getMapFullscreenImageUrl(popupData.image)}
           alt={popupData.title}
           onload={() => {
             fullscreenImagesLoaded[0] = true;

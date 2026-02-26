@@ -184,7 +184,11 @@
     }
   }
 
-  const roleOptions = ["student", "teacher", "admin", "guest"];
+  const roleOptions = ["student", "teacher", "admin", "notice_manager", "guest"];
+
+  function formatRoleLabel(role: string) {
+    return role.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+  }
 
   function getInitials(name: string) {
     return name?.charAt(0)?.toUpperCase() || "U";
@@ -474,7 +478,7 @@
                   class="px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-violet-500 w-full sm:w-48"
                 >
                   <option value="">All Roles</option>
-                  {#each roleOptions as role}<option value={role}>{role}</option
+                  {#each roleOptions as role}<option value={role}>{formatRoleLabel(role)}</option
                     >{/each}
                 </select>
               </div>
@@ -546,7 +550,7 @@
                                   class="text-[10px] font-bold uppercase tracking-wider bg-slate-100 border-none rounded py-1 pl-2 pr-6 focus:ring-2 focus:ring-violet-500"
                                 >
                                   {#each roleOptions as role}
-                                    <option value={role}>{role}</option>
+                                    <option value={role}>{formatRoleLabel(role)}</option>
                                   {/each}
                                 </select>
                                 {#if roleUpdateUserId === user.id}
