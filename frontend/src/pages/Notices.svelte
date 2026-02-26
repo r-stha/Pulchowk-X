@@ -114,6 +114,7 @@
   // Image loading progress state
   let imagesLoaded = $state<Record<number, boolean>>({})
   let imageProgress = $state<Record<number, number | undefined>>({})
+  let imageBlobUrls = $state<Record<number, string>>({})
   let progressFailedUrls = new Set<string>()
   const fullyLoadedUrls = new Set<string>()
 
@@ -143,9 +144,10 @@
     imageProgress[noticeId] = 0
     imagesLoaded[noticeId] = false
 
-    // Use XMLHttpRequest for progress tracking (better CORS support than fetch)
+    // Download the same optimized URL the <img> will use
+    const optimizedUrl = optimizeCloudinaryUrl(url, 800)
     const xhr = new XMLHttpRequest()
-    xhr.open('GET', url, true)
+    xhr.open('GET', optimizedUrl, true)
     xhr.responseType = 'blob'
 
     xhr.onprogress = (event) => {
@@ -157,8 +159,8 @@
     xhr.onload = () => {
       if (xhr.status === 200) {
         imageProgress[noticeId] = 100
-        // Don't set imagesLoaded here — let the <img onload> do it
-        // to avoid a white flash between progress hiding and image rendering
+        // Create blob URL so <img> uses already-downloaded data instantly
+        imageBlobUrls[noticeId] = URL.createObjectURL(xhr.response)
       } else {
         progressFailedUrls.add(url)
         imageProgress[noticeId] = undefined
@@ -1140,7 +1142,7 @@
                             </div>
                           {/if}
                           <img
-                            src={optimizeCloudinaryUrl(
+                            src={imageBlobUrls[notice.id] || optimizeCloudinaryUrl(
                               notice.attachmentUrl,
                               800,
                             )}
