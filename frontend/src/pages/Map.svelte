@@ -260,7 +260,7 @@
 
       imageProgress[index] = 100;
       // Create blob URL so <img> uses already-downloaded data instantly
-      imageBlobUrls[index] = URL.createObjectURL(new Blob(chunks));
+      imageBlobUrls[index] = URL.createObjectURL(new Blob(chunks as any[]));
     } catch (error) {
       console.log("Fetch progress failed, falling back", url);
       progressFailedUrls.add(url);
@@ -337,7 +337,7 @@
 
       fullscreenImageProgress[index] = 100;
       // Create blob URL so <img> uses already-downloaded data instantly
-      fullscreenBlobUrls[index] = URL.createObjectURL(new Blob(chunks));
+      fullscreenBlobUrls[index] = URL.createObjectURL(new Blob(chunks as any[]));
     } catch (error) {
       fullscreenProgressFailedUrls.add(url);
       fullscreenImageProgress[index] = undefined;
@@ -3282,7 +3282,7 @@
     />
 
     <div
-      class="absolute top-4 right-16 z-50 bg-white/95 backdrop-blur rounded-xl shadow-xl border border-cyan-200 p-1 flex gap-1"
+      class="absolute bottom-24 right-4 md:bottom-auto md:top-4 md:right-16 z-50 bg-white/95 backdrop-blur rounded-xl shadow-xl border border-cyan-200 p-1 flex gap-1"
     >
       <button
         class="px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-colors {isSatellite
@@ -3488,7 +3488,8 @@
           </div>
         {/if}
         <img
-          src={fullscreenBlobUrls[0] || getMapFullscreenImageUrl(popupData.image)}
+          src={fullscreenBlobUrls[0] ||
+            getMapFullscreenImageUrl(popupData.image)}
           alt={popupData.title}
           onload={() => {
             fullscreenImagesLoaded[0] = true;
