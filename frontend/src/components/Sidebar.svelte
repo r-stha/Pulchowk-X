@@ -568,11 +568,13 @@
             <a
                 use:route
                 href="/register"
-                class="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-linear-to-r from-cyan-600 to-blue-600 text-white font-bold text-sm shadow-md shadow-cyan-200/50 hover:shadow-lg transition-all active:scale-95 overflow-hidden"
+                class="flex flex-row items-center justify-center {sidebarWidth < 200 && !isCollapsed
+                    ? 'gap-1.5 px-2 py-2'
+                    : 'gap-3 px-3 py-2.5'} rounded-xl bg-linear-to-r from-cyan-600 to-blue-600 text-white font-bold shadow-md shadow-cyan-200/50 hover:shadow-lg transition-all active:scale-95 overflow-hidden w-full"
                 onclick={handleLinkClick}
             >
                 <svg
-                    class="w-5 h-5 shrink-0"
+                    class="{sidebarWidth < 200 ? 'w-4 h-4' : 'w-5 h-5'} shrink-0"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -585,7 +587,13 @@
                     />
                 </svg>
                 {#if !isCollapsed}
-                    <span>Sign In</span>
+                    <span
+                        class="{sidebarWidth < 200
+                            ? 'text-[11px]'
+                            : 'text-sm'} leading-tight whitespace-nowrap"
+                    >
+                        Sign In
+                    </span>
                 {/if}
             </a>
         {/if}
