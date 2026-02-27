@@ -83,12 +83,13 @@
 
   onMount(() => {
     window.addEventListener("click", handleClickOutside);
+    return () => window.removeEventListener("click", handleClickOutside);
+  });
 
+  $effect(() => {
     if (autofocus && inputElement) {
       inputElement.focus();
     }
-
-    return () => window.removeEventListener("click", handleClickOutside);
   });
 
   $effect(() => {
