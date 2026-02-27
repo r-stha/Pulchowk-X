@@ -60,7 +60,6 @@
     function handleMouseMove(e: MouseEvent) {
         if (!isResizing) return;
 
-
         const clampedWidth = Math.max(
             MIN_SIDEBAR_WIDTH,
             Math.min(e.clientX, MAX_SIDEBAR_WIDTH),
@@ -141,7 +140,7 @@
         class="absolute -right-3 top-0 bottom-0 w-6 cursor-col-resize group/handle z-50 hidden md:flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-300"
     >
         <div
-            class="absolute inset-y-0 left-1/2 -translate-x-1/2 w-[1px] bg-slate-200 group-hover/handle:bg-cyan-400 group-hover/handle:w-[2px] transition-all"
+            class="absolute inset-y-0 left-1/2 -translate-x-1/2 w-px bg-slate-200 group-hover/handle:bg-cyan-400 group-hover/handle:w-0.5 transition-all"
         ></div>
 
         <!-- Resize trigger overlay to make grabbing easier -->
@@ -214,7 +213,7 @@
         </div>
     </div>
 
-    <div class="px-4 mb-6 transition-all duration-500 overflow-hidden">
+    <div class="px-4 mb-6 transition-all duration-500 relative z-20">
         <div class="relative w-full">
             <div
                 class="transition-all duration-500 {isCollapsed
@@ -627,9 +626,7 @@
                 {/if}
             </div>
         {:else if navUser}
-            <div
-                class="flex items-center gap-3 px-2 py-1 overflow-hidden"
-            >
+            <div class="flex items-center gap-3 px-2 py-1 overflow-hidden">
                 <div
                     class="size-9 rounded-full bg-linear-to-tr from-cyan-500 to-blue-500 flex items-center justify-center text-white font-bold text-sm shrink-0 shadow-sm overflow-hidden"
                 >
