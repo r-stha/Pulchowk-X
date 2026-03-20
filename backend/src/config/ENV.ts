@@ -14,6 +14,12 @@ const getEnvVar = (key: string): string => {
   return value
 }
 
+const getOptionalEnvVar = (key: string): string | undefined => {
+  const value = process.env[key]
+  if (value === undefined || value === '') return undefined
+  return value
+}
+
 const ENV = {
   BETTER_AUTH_SECRET: getEnvVar('BETTER_AUTH_SECRET'),
   DATABASE_URL: getEnvVar('DATABASE_URL'),
@@ -26,6 +32,7 @@ const ENV = {
   CLOUDINARY_API_SECRET: getEnvVar('CLOUDINARY_API_SECRET'),
   FIREBASE_SERVICE_ACCOUNT_JSON: getEnvVar("FIREBASE_SERVICE_ACCOUNT_JSON"),
   NOTICE_SYNC_ALLOW_INSECURE_TLS: getEnvVar("NOTICE_SYNC_ALLOW_INSECURE_TLS"),
+  RUN_RUNTIME_SCHEMA_CHECKS: getOptionalEnvVar("RUN_RUNTIME_SCHEMA_CHECKS"),
 }
 
 export default ENV

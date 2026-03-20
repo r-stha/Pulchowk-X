@@ -235,6 +235,9 @@ async function ensureRuntimeSchema() {
 }
 
 async function startServer() {
+  const shouldRunRuntimeSchemaChecks =
+    ENV.MODE === 'DEV' || ENV.RUN_RUNTIME_SCHEMA_CHECKS === 'true'
+
   const runRuntimeSchemaChecks = async () => {
     try {
       await ensureRuntimeSchema()
@@ -249,9 +252,13 @@ async function startServer() {
     )
 
     // Keep dev startup responsive; don't block listen on schema sync.
-    void runRuntimeSchemaChecks()
-  } else {
+    if (shouldRunRuntimeSchemaChecks) {
+      void runRuntimeSchemaChecks()
+    }
+  } else if (shouldRunRuntimeSchemaChecks) {
     await runRuntimeSchemaChecks()
+  } else {
+    console.log('Skipping runtime schema checks in production')
   }
 
   startNotificationReminderJobs()
