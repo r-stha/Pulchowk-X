@@ -1,5 +1,7 @@
 import { Request, Response } from 'express'
-import { resolveStudentConciergeQuery } from '../services/chatbot-concierge.service.js'
+import { resolveStudentConciergeQuery, type ConversationMessage } from '../services/chatbot-concierge.service.js'
+
+const MAX_HISTORY_MESSAGES = 6
 
 export const chatAI = async (req: Request, res: Response) => {
   try {
@@ -22,8 +24,27 @@ export const chatAI = async (req: Request, res: Response) => {
       })
     }
 
+    // Parse and validate conversation history
+    let conversationHistory: ConversationMessage[] = []
+    if (Array.isArray(req.body?.conversationHistory)) {
+      conversationHistory = req.body.conversationHistory
+        .filter(
+          (msg: any) =>
+            typeof msg?.role === 'string' &&
+            (msg.role === 'user' || msg.role === 'assistant') &&
+            typeof msg?.content === 'string' &&
+            msg.content.trim().length > 0
+        )
+        .map((msg: any) => ({
+          role: msg.role as 'user' | 'assistant',
+          content: msg.content.trim().slice(0, 500),
+        }))
+        .slice(-MAX_HISTORY_MESSAGES)
+    }
+
     const response = await resolveStudentConciergeQuery(query, {
       allowLlm: true,
+      conversationHistory,
     })
 
     return res.json({
