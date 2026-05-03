@@ -108,8 +108,14 @@ export interface ConciergeResponsePayload {
   follow_up: string[];
 }
 
+export interface ConversationMessage {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
 interface ResolveOptions {
   allowLlm?: boolean;
+  conversationHistory?: ConversationMessage[];
 }
 
 const SOURCE_PRIORITY: Record<SourceType, number> = {
@@ -275,6 +281,60 @@ const KB = studentSupportKbData as StudentSupportKb;
 const BUILDINGS = ((locationData as any)?.buildings ?? []) as Building[];
 const BUILDING_BY_ID = new Map(BUILDINGS.map((item) => [item.id, item]));
 const genAI = new GoogleGenerativeAI(ENV.GEMINI_API_KEY);
+
+// ── Phase 3: In-memory TTL cache ────────────────────────────────────────────
+interface CacheEntry<T> {
+  data: T;
+  expiresAt: number;
+}
+const contextCache = new Map<string, CacheEntry<string>>();
+const CONTEXT_CACHE_TTL_MS = 3 * 60 * 1000; // 3 minutes
+
+function getCachedContext(key: string): string | null {
+  const entry = contextCache.get(key);
+  if (entry && Date.now() < entry.expiresAt) return entry.data;
+  contextCache.delete(key);
+  return null;
+}
+
+function setCachedContext(key: string, data: string): void {
+  contextCache.set(key, { data, expiresAt: Date.now() + CONTEXT_CACHE_TTL_MS });
+}
+
+// ── Phase 2: Fuzzy matching helper ──────────────────────────────────────────
+function levenshtein(a: string, b: string): number {
+  const m = a.length, n = b.length;
+  if (m === 0) return n;
+  if (n === 0) return m;
+  const dp: number[][] = Array.from({ length: m + 1 }, () => Array(n + 1).fill(0));
+  for (let i = 0; i <= m; i++) dp[i][0] = i;
+  for (let j = 0; j <= n; j++) dp[0][j] = j;
+  for (let i = 1; i <= m; i++) {
+    for (let j = 1; j <= n; j++) {
+      dp[i][j] = a[i-1] === b[j-1]
+        ? dp[i-1][j-1]
+        : 1 + Math.min(dp[i-1][j], dp[i][j-1], dp[i-1][j-1]);
+    }
+  }
+  return dp[m][n];
+}
+
+function fuzzyIncludes(text: string, term: string, maxDistance = 2): boolean {
+  if (text.includes(term)) return true;
+  if (term.length < 4) return false; // skip fuzzy for very short terms
+  const words = text.split(' ');
+  return words.some(word => {
+    if (Math.abs(word.length - term.length) > maxDistance) return false;
+    return levenshtein(word, term) <= maxDistance;
+  });
+}
+
+// ── Conversation history formatter ──────────────────────────────────────────
+function formatConversationHistory(history: ConversationMessage[]): string {
+  if (!history || history.length === 0) return '';
+  const lines = history.map(m => `${m.role === 'user' ? 'Student' : 'Assistant'}: ${m.content}`);
+  return `Previous conversation:\n${lines.join('\n')}\n`;
+}
 
 function normalize(value: string): string {
   return value
@@ -498,6 +558,8 @@ function matchSupportEntry(query: string): StudentSupportEntry | null {
         const normalizedKeyword = normalize(keyword);
         if (normalizedKeyword && normalized.includes(normalizedKeyword)) {
           score += 2;
+        } else if (normalizedKeyword && fuzzyIncludes(normalized, normalizedKeyword, 2)) {
+          score += 1; // partial credit for fuzzy match
         }
       }
       return { entry, score };
@@ -775,6 +837,7 @@ function mapLlmLocation(raw: LlmLocation, role: Role): ConciergeLocationPayload 
 
 async function resolveWithLlmNavigation(
   query: string,
+  history: ConversationMessage[] = [],
 ): Promise<ConciergeResponsePayload | null> {
   try {
     const model = genAI.getGenerativeModel({
@@ -803,14 +866,20 @@ async function resolveWithLlmNavigation(
       }
     }
 
+    const historyBlock = formatConversationHistory(history);
+
     const prompt = `You are a campus navigation assistant for Pulchowk Campus.
 Use only the provided verified building list.
 Do not invent buildings.
-
+${historyBlock ? `\n${historyBlock}\n` : ''}
 Buildings:
 ${JSON.stringify(relevantBuildings)}
 
 User query: ${query}
+
+Instructions:
+- If the user refers to something from the previous conversation (e.g. "there", "that place", "it"), resolve it using the conversation context.
+- Provide a short, helpful response.
 
 Return only JSON:
 {
@@ -973,12 +1042,19 @@ function getRelevantFaq(intent: ConciergeIntent): string {
 async function resolveWithAppContext(
   query: string,
   intent: ConciergeIntent,
+  history: ConversationMessage[] = [],
 ): Promise<ConciergeResponsePayload | null> {
   const topic = APP_INTENT_TOPICS[intent];
   if (!topic) return null;
 
   try {
-    const contextData = await buildAppContext(topic);
+    // Phase 3: Use cached context if available
+    const cacheKey = `context_${topic}`;
+    let contextData = getCachedContext(cacheKey);
+    if (!contextData) {
+      contextData = await buildAppContext(topic);
+      setCachedContext(cacheKey, contextData);
+    }
 
     const model = genAI.getGenerativeModel({
       model: "gemini-2.5-flash",
@@ -986,6 +1062,7 @@ async function resolveWithAppContext(
     });
 
     const relevantFaq = getRelevantFaq(intent);
+    const historyBlock = formatConversationHistory(history);
 
     const prompt = `You are Smart Pulchowk Assistant — a smart, friendly campus companion for Pulchowk Campus students.
 
@@ -997,27 +1074,31 @@ ${relevantFaq}
 
 Live data from the app:
 ${contextData}
-
+${historyBlock ? `\n${historyBlock}` : ''}
 User query: ${query}
 
 Instructions:
 - Answer the user's question using the live data and FAQs provided.
 - Be concise, helpful, and student-friendly.
+- If the user refers to something from the previous conversation (e.g. "those", "more details", "first one"), resolve it using the conversation context.
 - If the user asks "how-to" questions, refer to the FAQ section.
 - If the user asks to summarize notices, provide a clear summary grouped by category.
 - If the user asks about events, list them with dates and organizers.
 - If no relevant data is available, say so politely and suggest alternatives.
 - Do NOT make up data that is not in the context above.
 - Use markdown formatting: **bold** for emphasis, bullet lists with - for steps.
+- Suggest 1-3 short follow-up questions the student might ask next.
 
 Return only JSON:
 {
-  "message": "your helpful response"
+  "message": "your helpful response",
+  "follow_up": ["follow-up question 1", "follow-up question 2"]
 }`;
 
     const result = await model.generateContent(prompt);
     const parsed = safeJsonParse(result.response.text()) as {
       message?: string;
+      follow_up?: string[];
     } | null;
 
     if (
@@ -1028,6 +1109,13 @@ Return only JSON:
       return null;
     }
 
+    // Phase 2: Extract follow-up suggestions from LLM
+    const followUp = Array.isArray(parsed.follow_up)
+      ? parsed.follow_up
+          .filter((s): s is string => typeof s === 'string' && s.trim().length > 0)
+          .slice(0, 3)
+      : [];
+
     return {
       message: parsed.message.trim(),
       locations: [],
@@ -1035,7 +1123,7 @@ Return only JSON:
       intent,
       verified: true,
       sources: [`app_context:${topic}`, "llm:gemini-2.5-flash"],
-      follow_up: [],
+      follow_up: followUp,
     };
   } catch (error) {
     console.error("App context resolution failed:", error);
@@ -1050,6 +1138,7 @@ export async function resolveStudentConciergeQuery(
   const rawQuery = query.trim();
   const normalizedQuery = normalize(rawQuery);
   const allowLlm = options.allowLlm ?? true;
+  const history = options.conversationHistory ?? [];
 
   if (!rawQuery) {
     return buildFallbackResponse("unknown", rawQuery);
@@ -1060,7 +1149,7 @@ export async function resolveStudentConciergeQuery(
     if (deterministic) return deterministic;
 
     if (allowLlm) {
-      const llm = await resolveWithLlmNavigation(rawQuery);
+      const llm = await resolveWithLlmNavigation(rawQuery, history);
       if (llm) return llm;
     }
 
@@ -1082,7 +1171,7 @@ export async function resolveStudentConciergeQuery(
   // ── App-wide intent resolution (hybrid: live DB + LLM) ──────────────────
   const isAppIntent = inferredIntent in APP_INTENT_TOPICS;
   if (isAppIntent && allowLlm) {
-    const appResult = await resolveWithAppContext(rawQuery, inferredIntent);
+    const appResult = await resolveWithAppContext(rawQuery, inferredIntent, history);
     if (appResult) return appResult;
   }
 
@@ -1102,13 +1191,13 @@ export async function resolveStudentConciergeQuery(
   if (locationLookup) return locationLookup;
 
   if (isLocationLookupQuery(rawQuery) && allowLlm) {
-    const llm = await resolveWithLlmNavigation(rawQuery);
+    const llm = await resolveWithLlmNavigation(rawQuery, history);
     if (llm) return llm;
   }
 
   // ── Final fallback: try app context for ambiguous queries ────────────────
   if (allowLlm) {
-    const appFallback = await resolveWithAppContext(rawQuery, "app_help");
+    const appFallback = await resolveWithAppContext(rawQuery, "app_help", history);
     if (appFallback) return appFallback;
   }
 
